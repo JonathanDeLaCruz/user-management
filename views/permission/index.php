@@ -60,7 +60,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						'actions'=>[Url::to(['bulk-delete'])=>GridBulkActions::t('app', 'Delete'),],
 						]).'</div></div>',
 			'columns' => [
-				['class' => 'yii\grid\SerialColumn', 'options'=>['style'=>'width:10px'] ],
+				['class' => 'webvimark\modules\UserManagement\widgets\SerialColumn', 'options'=>['style'=>'width:10px'] ],
 
 				[
 					'attribute'=>'description',

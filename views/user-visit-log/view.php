@@ -9,11 +9,13 @@ use yii\widgets\DetailView;
  * @var webvimark\modules\UserManagement\models\UserVisitLog $model
  */
 
-$this->title = $model->id;
+$username = $model->user?->username ?? UserManagementModule::t('back', 'Deleted user');
+$this->title = $username;
 $this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Visit log'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="user-visit-log-view">
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
 
 	<div class="card um-card">
@@ -24,7 +26,7 @@ $this->params['breadcrumbs'][] = $this->title;
 				'attributes' => [
 					[
 						'attribute'=>'user_id',
-						'value'=>($model->user?->username ?? 'Usuario eliminado'),
+						'value'=>$username,
 					],
 					'ip',
 					'language',

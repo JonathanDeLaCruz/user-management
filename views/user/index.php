@@ -70,7 +70,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						],
 					]).'</div></div>',
 				'columns' => [
-					['class' => 'yii\grid\SerialColumn', 'options'=>['style'=>'width:10px'] ],
+					['class' => 'webvimark\modules\UserManagement\widgets\SerialColumn', 'options'=>['style'=>'width:10px'] ],
 
 					[
 						'class'=>'webvimark\modules\UserManagement\components\StatusColumn',
@@ -98,6 +98,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					[
 						'attribute'=>'gridRoleSearch',
 						'filter'=>ArrayHelper::map(Role::getAvailableRoles(Yii::$app->user->isSuperAdmin),'name', 'description'),
+						'filterInputOptions'=>['class'=>'form-select', 'prompt'=>UserManagementModule::t('back', 'All')],
 						'value'=>function(User $model){
 								return implode(', ', ArrayHelper::map($model->roles, 'name', 'description'));
 							},

@@ -17,6 +17,9 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Clear filters' => 'Limpiar filtros',
+    'All' => 'Todos',
+    'Deleted user' => 'Usuario eliminado',
     'Logout' => 'Salir',
     'Routes' => 'Rutas',
     'Username' => 'Nombre de usuario',

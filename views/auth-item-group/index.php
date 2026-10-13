@@ -64,7 +64,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						]).'</div></div>',
 				'filterModel' => $searchModel,
 				'columns' => [
-					['class' => 'yii\grid\SerialColumn', 'options'=>['style'=>'width:10px'] ],
+					['class' => 'webvimark\modules\UserManagement\widgets\SerialColumn', 'options'=>['style'=>'width:10px'] ],
 
 					[
 						'attribute'=>'name',

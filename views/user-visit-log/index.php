@@ -46,12 +46,12 @@ $this->params['breadcrumbs'][] = $this->title;
 				'layout'=>'{items}<div class="row"><div class="col-sm-8">{pager}</div><div class="col-sm-4 text-end">{summary}</div></div>',
 				'filterModel' => $searchModel,
 				'columns' => [
-					['class' => 'yii\grid\SerialColumn', 'options'=>['style'=>'width:10px'] ],
+					['class' => 'webvimark\modules\UserManagement\widgets\SerialColumn', 'options'=>['style'=>'width:10px'] ],
 
 					[
 						'attribute'=>'user_id',
 						'value'=>function($model){
-								return Html::a(($model->user?->username ?? 'Usuario eliminado'), ['view', 'id'=>$model->id], ['data-pjax'=>0]);
+								return Html::a(Html::encode($model->user?->username ?? UserManagementModule::t('back', 'Deleted user')), ['view', 'id'=>$model->id], ['data-pjax'=>0]);
 							},
 						'format'=>'raw',
 					],
