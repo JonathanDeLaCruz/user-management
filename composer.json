@@ -4,6 +4,5 @@
   "type": "yii2-extension",
   "autoload": {"psr-4": {"webvimark\\modules\\UserManagement\\": ""}},
   "require": {"php": ">=8.2 <8.6", "yiisoft/yii2": "^2.0.55", "yiisoft/yii2-bootstrap5": "^2.0", "yiisoft/yii2-symfonymailer": "^2.0"},
-  "repositories": [{"type": "composer", "url": "https://asset-packagist.org"}],
   "config": {"allow-plugins": {"yiisoft/yii2-composer": true}, "sort-packages": true}
 }
