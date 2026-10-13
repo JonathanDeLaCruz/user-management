@@ -5,7 +5,9 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 require dirname(__DIR__) . '/vendor/yiisoft/yii2/Yii.php';
 Yii::setAlias('@app', dirname(__DIR__) . '/demo');
 Yii::setAlias('@webvimark/modules/UserManagement', dirname(__DIR__));
-if (!is_dir(dirname(__DIR__) . '/demo/runtime')) mkdir(dirname(__DIR__) . '/demo/runtime',0755,true);
+foreach (['demo/runtime','demo/web/assets'] as $directory) {
+    if (!is_dir(dirname(__DIR__) . '/' . $directory)) mkdir(dirname(__DIR__) . '/' . $directory,0755,true);
+}
 class TestSession extends yii\web\Session
 {
     private array $values = [];
