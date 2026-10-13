@@ -10,13 +10,6 @@ Instala la versión estable desde [Packagist](https://packagist.org/packages/yii
 composer require "yii2-access/user-management:^2.0.6"
 ```
 
-Si utilizas `jonathandelacruz/yii2-user-management`, reemplázalo así:
-
-```bash
-composer remove jonathandelacruz/yii2-user-management --no-update
-composer require "yii2-access/user-management:^2.0.6" --with-all-dependencies
-```
-
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
 
 
@@ -53,12 +46,30 @@ Añade estas entradas a `config/web.php`, conservando la conexión `db` y los de
         'useFileTransport' => true,
     ],
 ],
-'params' => [
-    'adminEmail' => 'administracion@example.com',
-],
 ```
 
-Para enviar correos, configura el transporte SMTP y establece `useFileTransport => false`. Con `true` se guardan en `@runtime/mail`. El registro y la recuperación requieren GD o Imagick para el CAPTCHA.
+`authManager` gestiona roles y permisos en la base de datos. `cache` almacena las rutas comunes; conserva tu componente si ya lo tienes. `mailer` se utiliza para recuperar contraseñas y confirmar correos: conserva tu implementación si ya está configurada y adapta `viewPath` o las vistas de `mailerOptions`.
+
+`yii\mail\MailerInterface` es una interfaz, no una implementación que puedas instanciar directamente. El ejemplo utiliza Symfony Mailer. Para enviar correos, configura su transporte SMTP y establece `useFileTransport => false`; con `true` solo se guardan archivos en `@runtime/mail`.
+
+En `config/params.php`, añade o modifica el remitente:
+
+```php
+return [
+    // Conserva tus demás parámetros.
+    'adminEmail' => 'administracion@example.com',
+];
+```
+
+Tanto `config/web.php` como `config/console.php` deben cargar ese archivo (el proyecto básico de Yii ya lo hace):
+
+```php
+$params = require __DIR__ . '/params.php';
+// En el array de configuración:
+'params' => $params,
+```
+
+El registro y la recuperación requieren GD con FreeType o Imagick con soporte PNG para el CAPTCHA.
 
 ### 2. Configuración de consola
 
@@ -77,9 +88,6 @@ Añade a `config/console.php`, utilizando la misma base de datos que en la confi
 'components' => [
     'authManager' => ['class' => yii\rbac\DbManager::class],
     'cache' => ['class' => yii\caching\FileCache::class],
-],
-'params' => [
-    'adminEmail' => 'administracion@example.com',
 ],
 ```
 
@@ -107,7 +115,7 @@ Remove-Item Env:UM_ADMIN_PASSWORD
 
 ### 5. Proteger tus controladores
 
-Añade el filtro al controlador base:
+Añade `GhostAccessControl` a `behaviors()` del controlador base de tu aplicación, del que hereden los controladores que quieres proteger:
 
 ```php
 public function behaviors()
@@ -119,6 +127,10 @@ public function behaviors()
     return $behaviors;
 }
 ```
+
+Este ejemplo conserva los filtros de `parent::behaviors()`. Si el controlador ya declara filtros como `AccessControl` o `VerbFilter`, conserva también esas entradas y añade `ghost-access` al mismo array. No declares un segundo método `behaviors()` ni sustituyas el método completo.
+
+Los controladores del módulo ya incluyen este filtro en `components/BaseController.php`; solo debes añadirlo a los de tu aplicación.
 
 ## Primeros pasos
 
