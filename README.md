@@ -12,7 +12,7 @@ composer require jonathandelacruz/yii2-user-management:^2.0
 
 Si utilizas `webvimark/module-user-management`, sustituye esa dependencia por este paquete.
 
-La [plantilla opcional](https://github.com/JonathanDeLaCruz/user-management/releases/tag/v2.0.3) incluye menú lateral, pantallas de acceso y una gráfica de los accesos registrados durante los últimos 30 días. Descarga el ZIP adjunto y sigue su README; requiere el módulo actualizado y las migraciones aplicadas.
+La [plantilla opcional](https://github.com/JonathanDeLaCruz/user-management/releases/tag/v2.0.4) incluye menú lateral, pantallas de acceso y una gráfica de los accesos registrados durante los últimos 30 días. Descarga el ZIP adjunto y sigue su README; requiere el módulo actualizado y las migraciones aplicadas.
 
 ## Configuración
 
