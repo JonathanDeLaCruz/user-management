@@ -174,6 +174,7 @@ use webvimark\modules\UserManagement\components\GhostNav;
 use webvimark\modules\UserManagement\UserManagementModule;
 
 echo GhostNav::widget([
+    'encodeLabels' => false,
     'options' => ['class' => 'nav flex-column'],
     'items' => UserManagementModule::menuItems(),
 ]);
