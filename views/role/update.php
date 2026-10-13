@@ -1,4 +1,5 @@
 <?php
+use yii\helpers\Html;
 /**
  * @var yii\widgets\ActiveForm $form
  * @var webvimark\modules\UserManagement\models\rbacDB\Role $model
@@ -12,10 +13,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
 ?>
 
-<h2 class="lte-hide-title"><?= $this->title ?></h2>
+<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
-<div class="panel panel-default">
-	<div class="panel-body">
+<div class="card um-card">
+	<div class="card-body">
 		<?= $this->render('_form', [
 			'model'=>$model,
 		]) ?>

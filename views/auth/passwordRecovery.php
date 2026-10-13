@@ -1,7 +1,7 @@
 <?php
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 use yii\captcha\Captcha;
 use yii\helpers\Html;
 
@@ -16,10 +16,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="password-recovery">
 
-	<h2 class="text-center"><?= $this->title ?></h2>
+	<h2 class="text-center"><?= Html::encode($this->title) ?></h2>
 
 	<?php if ( Yii::$app->session->hasFlash('error') ): ?>
-		<div class="alert-alert-warning text-center">
+		<div class="alert alert-warning text-center">
 			<?= Yii::$app->session->getFlash('error') ?>
 		</div>
 	<?php endif; ?>
@@ -37,10 +37,10 @@ $this->params['breadcrumbs'][] = $this->title;
 		'captchaAction'=>['/user-management/auth/captcha']
 	]) ?>
 
-	<div class="form-group">
-		<div class="col-sm-offset-3 col-sm-9">
+	<div class="mb-3">
+		<div class="offset-sm-3 col-sm-9">
 			<?= Html::submitButton(
-				'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('front', 'Recover'),
+				'' . UserManagementModule::t('front', 'Recover'),
 				['class' => 'btn btn-primary']
 			) ?>
 		</div>

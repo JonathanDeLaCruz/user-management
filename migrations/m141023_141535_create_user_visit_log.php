@@ -9,7 +9,7 @@ class m141023_141535_create_user_visit_log extends Migration
 		$tableOptions = null;
 		if ( $this->db->driverName === 'mysql' )
 		{
-			$tableOptions = 'CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=InnoDB';
+			$tableOptions = 'CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ENGINE=InnoDB';
 		}
 
 	        // Check if user_visit_log_table Table exist
@@ -20,7 +20,7 @@ class m141023_141535_create_user_visit_log extends Migration
 			$this->createTable($table_name, array(
 				'id'             => 'pk',
 				'token'          => 'string not null',
-				'ip'             => 'varchar(15) not null',
+				'ip'             => 'varchar(45) not null',
 				'language'       => 'char(2) not null',
 				'browser_and_os' => 'string not null',
 				'user_id'        => 'int',

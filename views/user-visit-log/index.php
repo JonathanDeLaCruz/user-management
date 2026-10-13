@@ -1,10 +1,10 @@
 <?php
 
-use webvimark\extensions\DateRangePicker\DateRangePicker;
+
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
-use webvimark\extensions\GridPageSize\GridPageSize;
+use webvimark\modules\UserManagement\widgets\GridPageSize;
 use yii\grid\GridView;
 
 /**
@@ -20,12 +20,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
 	<?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-	<div class="panel panel-default">
+	<div class="card um-card">
 
-		<div class="panel-body">
+		<div class="card-body">
 
 			<div class="row">
-				<div class="col-sm-12 text-right">
+				<div class="col-sm-12 text-end">
 					<?= GridPageSize::widget(['pjaxId'=>'user-visit-log-grid-pjax']) ?>
 				</div>
 			</div>
@@ -37,13 +37,13 @@ $this->params['breadcrumbs'][] = $this->title;
 			<?= GridView::widget([
 				'id'=>'user-visit-log-grid',
 				'dataProvider' => $dataProvider,
-				'pager'=>[
+				'pager'=>['class' => 'yii\bootstrap5\LinkPager',
 					'options'=>['class'=>'pagination pagination-sm'],
 					'hideOnSinglePage'=>true,
 					'lastPageLabel'=>'>>',
 					'firstPageLabel'=>'<<',
 				],
-				'layout'=>'{items}<div class="row"><div class="col-sm-8">{pager}</div><div class="col-sm-4 text-right">{summary}</div></div>',
+				'layout'=>'{items}<div class="row"><div class="col-sm-8">{pager}</div><div class="col-sm-4 text-end">{summary}</div></div>',
 				'filterModel' => $searchModel,
 				'columns' => [
 					['class' => 'yii\grid\SerialColumn', 'options'=>['style'=>'width:10px'] ],
@@ -51,7 +51,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					[
 						'attribute'=>'user_id',
 						'value'=>function($model){
-								return Html::a(@$model->user->username, ['view', 'id'=>$model->id], ['data-pjax'=>0]);
+								return Html::a(($model->user?->username ?? 'Usuario eliminado'), ['view', 'id'=>$model->id], ['data-pjax'=>0]);
 							},
 						'format'=>'raw',
 					],
@@ -61,25 +61,20 @@ $this->params['breadcrumbs'][] = $this->title;
 					array(
 						'attribute'=>'ip',
 						'value'=>function($model){
-								return Html::a($model->ip, "http://ipinfo.io/" . $model->ip, ["target"=>"_blank"]);
+								return Html::a(Html::encode($model->ip), "https://ipinfo.io/" . $model->ip, ["target"=>"_blank"]);
 							},
 						'format'=>'raw',
 					),
 					'visit_time:datetime',
 					[
-						'class' => 'yii\grid\ActionColumn',
+						'class' => 'webvimark\modules\UserManagement\widgets\ActionColumn',
 						'template'=>'{view}',
 						'contentOptions'=>['style'=>'width:70px; text-align:center;'],
 					],
 				],
 			]); ?>
-		
+
 			<?php Pjax::end() ?>
 		</div>
 	</div>
 </div>
-
-<?php DateRangePicker::widget([
-	'model'     => $searchModel,
-	'attribute' => 'visit_time',
-]) ?>

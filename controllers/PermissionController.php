@@ -8,7 +8,7 @@ use webvimark\modules\UserManagement\models\rbacDB\AbstractItem;
 use webvimark\modules\UserManagement\models\rbacDB\Permission;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
 use webvimark\modules\UserManagement\models\rbacDB\search\PermissionSearch;
-use webvimark\components\AdminDefaultController;
+use webvimark\modules\UserManagement\components\AdminDefaultController;
 use webvimark\modules\UserManagement\UserManagementModule;
 use Yii;
 
@@ -36,14 +36,14 @@ class PermissionController extends AdminDefaultController
 		$routes = Route::find()->asArray()->all();
 
 		$permissions = Permission::find()
-			->andWhere(['not in', Yii::$app->getModule('user-management')->auth_item_table . '.name', [Yii::$app->getModule('user-management')->commonPermissionName, $id]])
+			->andWhere(['not in', \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table . '.name', [\webvimark\modules\UserManagement\UserManagementModule::instance()->commonPermissionName, $id]])
 			->joinWith('group')
 			->all();
 
 		$permissionsByGroup = [];
 		foreach ($permissions as $permission)
 		{
-			$permissionsByGroup[@$permission->group->name][] = $permission;
+			$permissionsByGroup[($permission->group?->name ?? 'Sin grupo')][] = $permission;
 		}
 
 		$childRoutes = AuthHelper::getChildrenByType($item->name, AbstractItem::TYPE_ROUTE);
@@ -63,7 +63,7 @@ class PermissionController extends AdminDefaultController
 	{
 		$item = $this->findModel($id);
 
-		$newChildPermissions = Yii::$app->request->post('child_permissions', []);
+		$newChildPermissions = (array)Yii::$app->request->post('child_permissions', []);
 
 		$oldChildPermissions = array_keys(AuthHelper::getChildrenByType($item->name, AbstractItem::TYPE_PERMISSION));
 
@@ -89,7 +89,7 @@ class PermissionController extends AdminDefaultController
 	{
 		$item = $this->findModel($id);
 
-		$newRoutes = Yii::$app->request->post('child_routes', []);
+		$newRoutes = (array)Yii::$app->request->post('child_routes', []);
 
 		$oldRoutes = array_keys(AuthHelper::getChildrenByType($item->name, AbstractItem::TYPE_ROUTE));
 
@@ -99,9 +99,9 @@ class PermissionController extends AdminDefaultController
 		Permission::addChildren($id, $toAdd);
 		Permission::removeChildren($id, $toRemove);
 
-		if ( ( $toAdd OR $toRemove ) AND ( $id == Yii::$app->getModule('user-management')->commonPermissionName ) )
+		if ( ( $toAdd OR $toRemove ) AND ( $id == \webvimark\modules\UserManagement\UserManagementModule::instance()->commonPermissionName ) )
 		{
-			Yii::$app->cache->delete('__commonRoutes');
+			if (Yii::$app->has('cache')) Yii::$app->cache->delete('__commonRoutes');
 		}
 
 		AuthHelper::invalidatePermissions();
@@ -165,4 +165,4 @@ class PermissionController extends AdminDefaultController
 
 		return $this->renderIsAjax('update', compact('model'));
 	}
-} 
+}

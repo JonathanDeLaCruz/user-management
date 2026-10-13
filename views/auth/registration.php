@@ -1,7 +1,7 @@
 <?php
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 use yii\captcha\Captcha;
 use yii\helpers\Html;
 
@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="user-registration">
 
-	<h2 class="text-center"><?= $this->title ?></h2>
+	<h2 class="text-center"><?= Html::encode($this->title) ?></h2>
 
 	<?php $form = ActiveForm::begin([
 		'id'=>'user',
@@ -35,10 +35,10 @@ $this->params['breadcrumbs'][] = $this->title;
 		'captchaAction'=>['/user-management/auth/captcha']
 	]) ?>
 
-	<div class="form-group">
-		<div class="col-sm-offset-3 col-sm-9">
+	<div class="mb-3">
+		<div class="offset-sm-3 col-sm-9">
 			<?= Html::submitButton(
-				'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('front', 'Register'),
+				'' . UserManagementModule::t('front', 'Register'),
 				['class' => 'btn btn-primary']
 			) ?>
 		</div>

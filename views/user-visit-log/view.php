@@ -16,15 +16,15 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="user-visit-log-view">
 
 
-	<div class="panel panel-default">
-		<div class="panel-body">
+	<div class="card um-card">
+		<div class="card-body">
 
 			<?= DetailView::widget([
 				'model' => $model,
 				'attributes' => [
 					[
 						'attribute'=>'user_id',
-						'value'=>@$model->user->username,
+						'value'=>($model->user?->username ?? 'Usuario eliminado'),
 					],
 					'ip',
 					'language',

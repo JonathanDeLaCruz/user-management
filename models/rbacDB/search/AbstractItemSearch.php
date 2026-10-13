@@ -33,7 +33,7 @@ abstract class AbstractItemSearch extends AbstractItem
 		$dataProvider = new ActiveDataProvider([
 			'query' => $query,
 			'pagination' => [
-				'pageSize' => \Yii::$app->request->cookies->getValue('_grid_page_size', 20),
+				'pageSize' => \max(10, min(100, (int)Yii::$app->request->cookies->getValue('_grid_page_size', 20))),
 			],
 			'sort'=>[
 				'defaultOrder'=>[
@@ -46,9 +46,9 @@ abstract class AbstractItemSearch extends AbstractItem
 			return $dataProvider;
 		}
 
-        	$query->andFilterWhere(['like', Yii::$app->getModule('user-management')->auth_item_table.'.name', $this->name])
-			->andFilterWhere(['like', Yii::$app->getModule('user-management')->auth_item_table.'.description', $this->description])
-			->andFilterWhere([Yii::$app->getModule('user-management')->auth_item_table.'.group_code'=>$this->group_code]);
+	$query->andFilterWhere(['like', \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table.'.name', $this->name])
+			->andFilterWhere(['like', \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table.'.description', $this->description])
+			->andFilterWhere([\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table.'.group_code'=>$this->group_code]);
 
 		return $dataProvider;
 	}

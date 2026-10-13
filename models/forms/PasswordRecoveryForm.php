@@ -44,7 +44,7 @@ class PasswordRecoveryForm extends Model
 	 */
 	public function validateEmailConfirmedAndUserActive()
 	{
-		if ( !Yii::$app->getModule('user-management')->checkAttempts() )
+		if ( !\webvimark\modules\UserManagement\UserManagementModule::instance()->checkAttempts((string)$this->email, 'password-reset') )
 		{
 			$this->addError('email', UserManagementModule::t('front', 'Too many attempts'));
 
@@ -61,10 +61,7 @@ class PasswordRecoveryForm extends Model
 		{
 			$this->user = $user;
 		}
-		else
-		{
-			$this->addError('email', UserManagementModule::t('front', 'E-mail is invalid'));
-		}
+		return true;
 	}
 
 	/**
@@ -90,11 +87,12 @@ class PasswordRecoveryForm extends Model
 			return false;
 		}
 
-		$this->user->generateConfirmationToken();
-		$this->user->save(false);
+		if (!$this->user) return true;
+		$this->user->generateConfirmationToken('password-reset');
+		if (!$this->user->save(false)) return false;
 
-		return Yii::$app->mailer->compose(Yii::$app->getModule('user-management')->mailerOptions['passwordRecoveryFormViewFile'], ['user' => $this->user])
-			->setFrom(Yii::$app->getModule('user-management')->mailerOptions['from'])
+		return Yii::$app->mailer->compose(\webvimark\modules\UserManagement\UserManagementModule::instance()->mailerOptions['passwordRecoveryFormViewFile'], ['user' => $this->user])
+			->setFrom(\webvimark\modules\UserManagement\UserManagementModule::instance()->mailerOptions['from'])
 			->setTo($this->email)
 			->setSubject(UserManagementModule::t('front', 'Password reset for') . ' ' . Yii::$app->name)
 			->send();

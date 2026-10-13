@@ -21,7 +21,7 @@ class AuthItemGroup extends \yii\db\ActiveRecord
 	*/
 	public static function tableName()
 	{
-		return Yii::$app->getModule('user-management')->auth_item_group_table;
+		return \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_group_table;
 	}
 
 	/**

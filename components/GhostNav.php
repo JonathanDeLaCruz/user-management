@@ -2,7 +2,7 @@
 namespace webvimark\modules\UserManagement\components;
 
 use webvimark\modules\UserManagement\models\User;
-use yii\bootstrap\Nav;
+use yii\bootstrap5\Nav;
 
 /**
  * Class GhostNav
@@ -14,7 +14,7 @@ use yii\bootstrap\Nav;
  */
 class GhostNav extends Nav
 {
-	public function init()
+	public function init(): void
 	{
 		parent::init();
 
@@ -54,4 +54,4 @@ class GhostNav extends Nav
 
 		return $allVisible;
 	}
-} 
+}

@@ -2,8 +2,8 @@
 
 namespace webvimark\modules\UserManagement\models;
 
-use Ikimea\Browser\Browser;
-use webvimark\helpers\LittleBigHelper;
+
+use webvimark\modules\UserManagement\components\LittleBigHelper;
 use webvimark\modules\UserManagement\UserManagementModule;
 use Yii;
 
@@ -22,7 +22,7 @@ use Yii;
  *
  * @property User $user
  */
-class UserVisitLog extends \webvimark\components\BaseActiveRecord
+class UserVisitLog extends \yii\db\ActiveRecord
 {
 	CONST SESSION_TOKEN = '__visitorToken';
 
@@ -33,16 +33,16 @@ class UserVisitLog extends \webvimark\components\BaseActiveRecord
 	 */
 	public static function newVisitor($userId)
 	{
-		$browser = new Browser();
+
 
 		$model             = new self();
 		$model->user_id    = $userId;
-		$model->token      = uniqid();
-		$model->ip         = LittleBigHelper::getRealIp();
+		$model->token      = Yii::$app->security->generateRandomString();
+		$model->ip         = Yii::$app->request->userIP;
 		$model->language   = isset( $_SERVER['HTTP_ACCEPT_LANGUAGE'] ) ? substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2) : '';
-		$model->browser    = $browser->getBrowser();
-		$model->os         = $browser->getPlatform();
-		$model->user_agent = $browser->getUserAgent();
+		$model->browser    = 'Unknown';
+		$model->os         = 'Unknown';
+		$model->user_agent = substr((string)Yii::$app->request->userAgent, 0, 255);
 		$model->visit_time = time();
 		$model->save(false);
 
@@ -55,18 +55,18 @@ class UserVisitLog extends \webvimark\components\BaseActiveRecord
 	 */
 	public static function checkToken()
 	{
-		if (Yii::$app->user->isGuest)
+		if (\webvimark\modules\UserManagement\models\User::component()->isGuest)
 			return;
 
 		$model = static::find()
-			->andWhere(['user_id'=>Yii::$app->user->id])
+			->andWhere(['user_id'=>\webvimark\modules\UserManagement\models\User::component()->id])
 			->orderBy('id DESC')
 			->asArray()
 			->one();
 
 		if ( !$model OR ($model['token'] !== Yii::$app->session->get(self::SESSION_TOKEN)) )
 		{
-			Yii::$app->user->logout();
+			\webvimark\modules\UserManagement\models\User::component()->logout();
 
 			echo "<script> location.reload();</script>";
 			Yii::$app->end();
@@ -78,7 +78,7 @@ class UserVisitLog extends \webvimark\components\BaseActiveRecord
 	*/
 	public static function tableName()
 	{
-		return Yii::$app->getModule('user-management')->user_visit_log_table;
+		return \webvimark\modules\UserManagement\UserManagementModule::instance()->user_visit_log_table;
 	}
 
 	/**
@@ -90,7 +90,7 @@ class UserVisitLog extends \webvimark\components\BaseActiveRecord
 			[['token', 'ip', 'language', 'visit_time'], 'required'],
 			[['user_id', 'visit_time'], 'integer'],
 			[['token', 'user_agent'], 'string', 'max' => 255],
-			[['ip'], 'string', 'max' => 15],
+			[['ip'], 'string', 'max' => 45],
 			[['os'], 'string', 'max' => 20],
 			[['browser'], 'string', 'max' => 30],
 			[['language'], 'string', 'max' => 2]

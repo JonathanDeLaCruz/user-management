@@ -14,12 +14,12 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="change-own-password-success">
 
 	<div class="alert alert-success text-center">
-		<?= UserManagementModule::t('front', 'E-mail confirmed') ?> - <b><?= $user->email ?></b>
+		<?= UserManagementModule::t('front', 'E-mail confirmed') ?> - <b><?= \yii\helpers\Html::encode($user->email) ?></b>
 
-		<?php if ( isset($_GET['returnUrl']) ): ?>
+		<?php if ( isset(Yii::$app->homeUrl) ): ?>
 			<br/>
 			<br/>
-			<b><?= Html::a(UserManagementModule::t('front', 'Continue'), $_GET['returnUrl']) ?></b>
+			<b><?= Html::a(UserManagementModule::t('front', 'Continue'), Yii::$app->homeUrl) ?></b>
 		<?php endif; ?>
 	</div>
 

@@ -18,7 +18,7 @@ class Permission extends AbstractItem
 	public static function getUserPermissions($userId)
 	{
 		$dbManager = Yii::$app->authManager instanceof DbManager ? Yii::$app->authManager : new DbManager();
-		
+
 		return $dbManager->getPermissionsByUser($userId);
 	}
 
@@ -55,7 +55,7 @@ class Permission extends AbstractItem
 			try
 			{
 				Yii::$app->db->createCommand()
-					->insert(Yii::$app->getModule('user-management')->auth_item_child_table, [
+					->insert(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_child_table, [
 						'parent' => $permission->name,
 						'child'  => $route,
 					])->execute();

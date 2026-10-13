@@ -2,7 +2,7 @@
 
 namespace webvimark\modules\UserManagement\controllers;
 
-use webvimark\components\BaseController;
+use webvimark\modules\UserManagement\components\BaseController;
 use webvimark\modules\UserManagement\components\UserAuthEvent;
 use webvimark\modules\UserManagement\models\forms\ChangeOwnPasswordForm;
 use webvimark\modules\UserManagement\models\forms\ConfirmEmailForm;
@@ -21,7 +21,7 @@ class AuthController extends BaseController
 	/**
 	 * @var array
 	 */
-	public $freeAccessActions = ['login', 'logout', 'confirm-registration-email'];
+	public $freeAccessActions = ['login', 'logout', 'confirm-registration-email', 'password-recovery', 'password-recovery-receive', 'confirm-email-receive', 'change-own-password', 'confirm-email'];
 
 	/**
 	 * @return array
@@ -29,7 +29,7 @@ class AuthController extends BaseController
 	public function actions()
 	{
 		return [
-			'captcha' => $this->module->captchaOptions,
+			'captcha' => UserManagementModule::instance()->captchaOptions,
 		];
 	}
 
@@ -40,7 +40,7 @@ class AuthController extends BaseController
 	 */
 	public function actionLogin()
 	{
-		if ( !Yii::$app->user->isGuest )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
@@ -66,7 +66,7 @@ class AuthController extends BaseController
 	 */
 	public function actionLogout()
 	{
-		Yii::$app->user->logout();
+		\webvimark\modules\UserManagement\models\User::component()->logout();
 
 		return $this->redirect(Yii::$app->homeUrl);
 	}
@@ -79,7 +79,7 @@ class AuthController extends BaseController
 	 */
 	public function actionChangeOwnPassword()
 	{
-		if ( Yii::$app->user->isGuest )
+		if ( \webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
@@ -115,12 +115,12 @@ class AuthController extends BaseController
 	 */
 	public function actionRegistration()
 	{
-		if ( !Yii::$app->user->isGuest )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
 
-		$model = new $this->module->registrationFormClass;
+		$model = Yii::createObject(UserManagementModule::instance()->registrationFormClass);
 
 
 		if ( Yii::$app->request->isAjax AND $model->load(Yii::$app->request->post()) )
@@ -148,22 +148,22 @@ class AuthController extends BaseController
 				{
 					if ( $user )
 					{
-						if ( Yii::$app->getModule('user-management')->useEmailAsLogin AND Yii::$app->getModule('user-management')->emailConfirmationRequired )
+						if ( \webvimark\modules\UserManagement\UserManagementModule::instance()->useEmailAsLogin AND \webvimark\modules\UserManagement\UserManagementModule::instance()->emailConfirmationRequired )
 						{
 							return $this->renderIsAjax('registrationWaitForEmailConfirmation', compact('user'));
 						}
 						else
 						{
-							$roles = (array)$this->module->rolesAfterRegistration;
+							$roles = (array)UserManagementModule::instance()->rolesAfterRegistration;
 
 							foreach ($roles as $role)
 							{
 								User::assignRole($user->id, $role);
 							}
 
-							Yii::$app->user->login($user);
+							\webvimark\modules\UserManagement\models\User::component()->login($user);
 
-							return $this->redirect(Yii::$app->user->returnUrl);
+							return $this->redirect(\webvimark\modules\UserManagement\models\User::component()->returnUrl);
 						}
 
 					}
@@ -186,9 +186,9 @@ class AuthController extends BaseController
 	 */
 	public function actionConfirmRegistrationEmail($token)
 	{
-		if ( Yii::$app->getModule('user-management')->useEmailAsLogin AND Yii::$app->getModule('user-management')->emailConfirmationRequired )
+		if ( \webvimark\modules\UserManagement\UserManagementModule::instance()->useEmailAsLogin AND \webvimark\modules\UserManagement\UserManagementModule::instance()->emailConfirmationRequired )
 		{
-			$model = new $this->module->registrationFormClass;
+			$model = Yii::createObject(UserManagementModule::instance()->registrationFormClass);
 
 			$user = $model->checkConfirmationToken($token);
 
@@ -199,6 +199,7 @@ class AuthController extends BaseController
 
 			throw new NotFoundHttpException(UserManagementModule::t('front', 'Token not found. It may be expired'));
 		}
+		throw new NotFoundHttpException('La confirmación de registro no está habilitada.');
 	}
 
 
@@ -209,7 +210,7 @@ class AuthController extends BaseController
 	 */
 	public function actionPasswordRecovery()
 	{
-		if ( !Yii::$app->user->isGuest )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
@@ -259,12 +260,12 @@ class AuthController extends BaseController
 	 */
 	public function actionPasswordRecoveryReceive($token)
 	{
-		if ( !Yii::$app->user->isGuest )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
 
-		$user = User::findByConfirmationToken($token);
+		$user = User::findByConfirmationToken($token, 'password-reset');
 
 		if ( !$user )
 		{
@@ -280,7 +281,7 @@ class AuthController extends BaseController
 		{
 			if ( $this->triggerModuleEvent(UserAuthEvent::BEFORE_PASSWORD_RECOVERY_COMPLETE, ['model'=>$model]) )
 			{
-				$model->changePassword(false);
+				if (!$model->changePassword(false)) { throw new \yii\web\ServerErrorHttpException('No se pudo guardar la contraseña.'); }
 
 				if ( $this->triggerModuleEvent(UserAuthEvent::AFTER_PASSWORD_RECOVERY_COMPLETE, ['model'=>$model]) )
 				{
@@ -297,7 +298,7 @@ class AuthController extends BaseController
 	 */
 	public function actionConfirmEmail()
 	{
-		if ( Yii::$app->user->isGuest )
+		if ( \webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			return $this->goHome();
 		}
@@ -351,16 +352,17 @@ class AuthController extends BaseController
 	 */
 	public function actionConfirmEmailReceive($token)
 	{
-		$user = User::findByConfirmationToken($token);
+		$user = User::findByConfirmationToken($token, 'email');
 
 		if ( !$user )
 		{
 			throw new NotFoundHttpException(UserManagementModule::t('front', 'Token not found. It may be expired'));
 		}
-		
-		$user->email_confirmed = 1;
-		$user->removeConfirmationToken();
-		$user->save(false);
+
+		if (!$this->triggerModuleEvent(UserAuthEvent::BEFORE_EMAIL_CONFIRMATION_COMPLETE, ['user'=>$user])) throw new ForbiddenHttpException();
+		if (User::updateAll(['email_confirmed'=>1, 'confirmation_token'=>null, 'updated_at'=>time()], ['id'=>$user->id, 'confirmation_token'=>$user->confirmation_token]) !== 1) throw new NotFoundHttpException('Token ya utilizado.');
+		$user->refresh();
+		$this->triggerModuleEvent(UserAuthEvent::AFTER_EMAIL_CONFIRMATION_COMPLETE, ['user'=>$user]);
 
 		return $this->renderIsAjax('confirmEmailSuccess', compact('user'));
 	}
@@ -377,7 +379,7 @@ class AuthController extends BaseController
 	{
 		$event = new UserAuthEvent($data);
 
-		$this->module->trigger($eventName, $event);
+		UserManagementModule::instance()->trigger($eventName, $event);
 
 		return $event->isValid;
 	}

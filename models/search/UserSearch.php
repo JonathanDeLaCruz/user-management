@@ -32,7 +32,7 @@ class UserSearch extends User
 
 		$query->with(['roles']);
 
-		if ( !Yii::$app->user->isSuperadmin )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isSuperadmin )
 		{
 			$query->where(['superadmin'=>0]);
 		}
@@ -40,7 +40,7 @@ class UserSearch extends User
 		$dataProvider = new ActiveDataProvider([
 			'query' => $query,
 			'pagination' => [
-				'pageSize' => Yii::$app->request->cookies->getValue('_grid_page_size', 20),
+				'pageSize' => max(10, min(100, (int)Yii::$app->request->cookies->getValue('_grid_page_size', 20))),
 			],
 			'sort'=>[
 				'defaultOrder'=>[
@@ -62,14 +62,14 @@ class UserSearch extends User
 			'id' => $this->id,
 			'superadmin' => $this->superadmin,
 			'status' => $this->status,
-			Yii::$app->getModule('user-management')->auth_item_table . '.name' => $this->gridRoleSearch,
+			\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table . '.name' => $this->gridRoleSearch,
 			'registration_ip' => $this->registration_ip,
 			'created_at' => $this->created_at,
 			'updated_at' => $this->updated_at,
 			'email_confirmed' => $this->email_confirmed,
 		]);
 
-        	$query->andFilterWhere(['like', 'username', $this->username])
+	$query->andFilterWhere(['like', 'username', $this->username])
 			->andFilterWhere(['like', 'email', $this->email]);
 
 		return $dataProvider;

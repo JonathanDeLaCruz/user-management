@@ -8,21 +8,11 @@ class m140809_072112_insert_superadmin_to_user extends Migration
 {
 	public function safeUp()
 	{
-		$user = new User();
-		$user->superadmin = 1;
-		$user->status = User::STATUS_ACTIVE;
-		$user->username = 'superadmin';
-		$user->password = 'superadmin';
-		$user->save(false);
+		// Administrators are created explicitly by the console command, never with a shared password.
 	}
 
 	public function safeDown()
 	{
-		$user = User::findByUsername('superadmin');
-
-		if ( $user )
-		{
-			$user->delete();
-		}
+		// No account was inserted by this migration.
 	}
 }

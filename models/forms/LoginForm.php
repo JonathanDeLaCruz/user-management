@@ -1,7 +1,7 @@
 <?php
 namespace webvimark\modules\UserManagement\models\forms;
 
-use webvimark\helpers\LittleBigHelper;
+use webvimark\modules\UserManagement\components\LittleBigHelper;
 use webvimark\modules\UserManagement\models\User;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\base\Model;
@@ -44,7 +44,7 @@ class LoginForm extends Model
 	 */
 	public function validatePassword()
 	{
-		if ( !Yii::$app->getModule('user-management')->checkAttempts() )
+		if ( !\webvimark\modules\UserManagement\UserManagementModule::instance()->checkAttempts((string)$this->username, 'login') )
 		{
 			$this->addError('password', UserManagementModule::t('front', 'Too many attempts'));
 
@@ -74,7 +74,7 @@ class LoginForm extends Model
 
 			$ips = array_map('trim', $ips);
 
-			if ( !in_array(LittleBigHelper::getRealIp(), $ips) )
+			if ( !in_array(Yii::$app->request->userIP, $ips) )
 			{
 				$this->addError('password', UserManagementModule::t('front', "You could not login from this IP"));
 			}
@@ -89,7 +89,7 @@ class LoginForm extends Model
 	{
 		if ( $this->validate() )
 		{
-			return Yii::$app->user->login($this->getUser(), $this->rememberMe ? Yii::$app->user->cookieLifetime : 0);
+			return \webvimark\modules\UserManagement\models\User::component()->login($this->getUser(), $this->rememberMe ? \webvimark\modules\UserManagement\models\User::component()->cookieLifetime : 0);
 		}
 		else
 		{
@@ -105,7 +105,7 @@ class LoginForm extends Model
 	{
 		if ( $this->_user === false )
 		{
-			$u = new \Yii::$app->user->identityClass;
+			$u = Yii::createObject(\webvimark\modules\UserManagement\models\User::component()->identityClass);
 			$this->_user = ($u instanceof User ? $u->findByUsername($this->username) : User::findByUsername($this->username));
 		}
 

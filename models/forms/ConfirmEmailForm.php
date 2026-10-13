@@ -84,7 +84,7 @@ class ConfirmEmailForm extends Model
 	{
 		if ( $this->user AND $this->user->confirmation_token )
 		{
-			$expire    = Yii::$app->getModule('user-management')->confirmationTokenExpire;
+			$expire    = \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire;
 
 			$parts     = explode('_', $this->user->confirmation_token);
 			$timestamp = (int)end($parts);
@@ -115,11 +115,12 @@ class ConfirmEmailForm extends Model
 		}
 
 		$this->user->email = $this->email;
-		$this->user->generateConfirmationToken();
+		$this->user->email_confirmed = 0;
+		$this->user->generateConfirmationToken('email');
 		$this->user->save(false);
 
-		return Yii::$app->mailer->compose(Yii::$app->getModule('user-management')->mailerOptions['confirmEmailFormViewFile'], ['user' => $this->user])
-			->setFrom(Yii::$app->getModule('user-management')->mailerOptions['from'])
+		return Yii::$app->mailer->compose(\webvimark\modules\UserManagement\UserManagementModule::instance()->mailerOptions['confirmEmailFormViewFile'], ['user' => $this->user])
+			->setFrom(\webvimark\modules\UserManagement\UserManagementModule::instance()->mailerOptions['from'])
 			->setTo($this->email)
 			->setSubject(UserManagementModule::t('front', 'E-mail confirmation for') . ' ' . Yii::$app->name)
 			->send();

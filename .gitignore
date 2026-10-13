@@ -27,7 +27,7 @@ themes/classic/views/
 
 # composer itself is not needed
 composer.phar
-composer.lock
+# The root lock is tracked for reproducible tests.
 
 # SASS
 .sass-cache
@@ -82,3 +82,12 @@ $RECYCLE.BIN/
 phpunit.phar
 # local phpunit config
 /phpunit.xml
+/demo/vendor/
+/demo/runtime/
+/demo/web/assets/
+/.runtimes/
+/.downloads/
+/.phpunit.cache/
+/reports/local-credentials.txt
+/.env
+/reports-phpstan.json

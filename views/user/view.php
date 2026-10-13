@@ -19,10 +19,10 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="user-view">
 
-	<h2 class="lte-hide-title"><?= $this->title ?></h2>
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
-	<div class="panel panel-default">
-		<div class="panel-body">
+	<div class="card um-card">
+		<div class="card-body">
 
 		    <p>
 			<?= GhostHtml::a(UserManagementModule::t('back', 'Edit'), ['update', 'id' => $model->id], ['class' => 'btn btn-sm btn-primary']) ?>
@@ -30,11 +30,11 @@ $this->params['breadcrumbs'][] = $this->title;
 			<?= GhostHtml::a(
 				UserManagementModule::t('back', 'Roles and permissions'),
 				['/user-management/user-permission/set', 'id'=>$model->id],
-				['class' => 'btn btn-sm btn-default']
+				['class' => 'btn btn-sm btn-outline-secondary']
 			) ?>
 
 			<?= GhostHtml::a(UserManagementModule::t('back', 'Delete'), ['delete', 'id' => $model->id], [
-			    'class' => 'btn btn-sm btn-danger pull-right',
+			    'class' => 'btn btn-sm btn-danger float-end',
 			    'data' => [
 				'confirm' => UserManagementModule::t('back', 'Are you sure you want to delete this user?'),
 				'method' => 'post',
@@ -65,7 +65,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					],
 					[
 						'label'=>UserManagementModule::t('back', 'Roles'),
-						'value'=>implode('<br>', ArrayHelper::map(Role::getUserRoles($model->id), 'name', 'description')),
+						'value'=>implode('<br>', array_map([Html::class, 'encode'], ArrayHelper::map(Role::getUserRoles($model->id), 'name', 'description'))),
 						'visible'=>User::hasPermission('viewUserRoles'),
 						'format'=>'raw',
 					],
@@ -75,7 +75,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					],
 					array(
 						'attribute'=>'registration_ip',
-						'value'=>Html::a($model->registration_ip, "http://ipinfo.io/" . $model->registration_ip, ["target"=>"_blank"]),
+						'value'=>Html::a(Html::encode($model->registration_ip), "https://ipinfo.io/" . $model->registration_ip, ["target"=>"_blank"]),
 						'format'=>'raw',
 						'visible'=>User::hasPermission('viewRegistrationIp'),
 					),

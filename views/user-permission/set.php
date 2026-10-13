@@ -8,7 +8,7 @@
 use webvimark\modules\UserManagement\components\GhostHtml;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\BootstrapPluginAsset;
+use yii\bootstrap5\BootstrapPluginAsset;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 
@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Us
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<h2 class="lte-hide-title"><?= $this->title ?></h2>
+<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
 <?php if ( Yii::$app->session->hasFlash('success') ): ?>
 	<div class="alert alert-success text-center">
@@ -29,13 +29,13 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="row">
 	<div class="col-sm-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">
+		<div class="card um-card">
+			<div class="card-header">
 				<strong>
-					<span class="glyphicon glyphicon-th"></span> <?= UserManagementModule::t('back', 'Roles') ?>
+					<?= UserManagementModule::t('back', 'Roles') ?>
 				</strong>
 			</div>
-			<div class="panel-body">
+			<div class="card-body">
 
 				<?= Html::beginForm(['set-roles', 'id'=>$user->id]) ?>
 
@@ -44,18 +44,18 @@ $this->params['breadcrumbs'][] = $this->title;
 						<?php $isChecked = in_array($aRole['name'], ArrayHelper::map(Role::getUserRoles($user->id), 'name', 'name')) ? 'checked' : '' ?>
 
 						<?php if ( Yii::$app->getModule('user-management')->userCanHaveMultipleRoles ): ?>
-							<input type="checkbox" <?= $isChecked ?> name="roles[]" value="<?= $aRole['name'] ?>">
+							<input type="checkbox" <?= $isChecked ?> name="roles[]" value="<?= Html::encode($aRole['name']) ?>">
 
 						<?php else: ?>
-							<input type="radio" <?= $isChecked ?> name="roles" value="<?= $aRole['name'] ?>">
+							<input type="radio" <?= $isChecked ?> name="roles" value="<?= Html::encode($aRole['name']) ?>">
 
 						<?php endif; ?>
 
-						<?= $aRole['description'] ?>
+						<?= Html::encode($aRole['description']) ?>
 					</label>
 
 					<?= GhostHtml::a(
-						'<span class="glyphicon glyphicon-edit"></span>',
+						'',
 						['/user-management/role/view', 'id'=>$aRole['name']],
 						['target'=>'_blank']
 					) ?>
@@ -67,11 +67,11 @@ $this->params['breadcrumbs'][] = $this->title;
 				<?php if ( Yii::$app->user->isSuperadmin OR Yii::$app->user->id != $user->id ): ?>
 
 					<?= Html::submitButton(
-						'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+						'' . UserManagementModule::t('back', 'Save'),
 						['class'=>'btn btn-primary btn-sm']
 					) ?>
 				<?php else: ?>
-					<div class="alert alert-warning well-sm text-center">
+					<div class="alert alert-warning p-2 text-center">
 						<?= UserManagementModule::t('back', 'You can not change own permissions') ?>
 					</div>
 				<?php endif; ?>
@@ -83,28 +83,28 @@ $this->params['breadcrumbs'][] = $this->title;
 	</div>
 
 	<div class="col-sm-8">
-		<div class="panel panel-default">
-			<div class="panel-heading">
+		<div class="card um-card">
+			<div class="card-header">
 				<strong>
-					<span class="glyphicon glyphicon-th"></span> <?= UserManagementModule::t('back', 'Permissions') ?>
+					<?= UserManagementModule::t('back', 'Permissions') ?>
 				</strong>
 			</div>
-			<div class="panel-body">
+			<div class="card-body">
 
 				<div class="row">
 					<?php foreach ($permissionsByGroup as $groupName => $permissions): ?>
 
 						<div class="col-sm-6">
 							<fieldset>
-								<legend><?= $groupName ?></legend>
+								<legend><?= Html::encode($groupName) ?></legend>
 
 								<ul>
 									<?php foreach ($permissions as $permission): ?>
 										<li>
-											<?= $permission->description ?>
+											<?= Html::encode($permission->description) ?>
 
 											<?= GhostHtml::a(
-												'<span class="glyphicon glyphicon-edit"></span>',
+												'',
 												['/user-management/permission/view', 'id'=>$permission->name],
 												['target'=>'_blank']
 											) ?>
@@ -124,18 +124,3 @@ $this->params['breadcrumbs'][] = $this->title;
 		</div>
 	</div>
 </div>
-
-<?php
-$this->registerJs(<<<JS
-
-$('.role-help-btn').off('mouseover mouseleave')
-	.on('mouseover', function(){
-		var _t = $(this);
-		_t.popover('show');
-	}).on('mouseleave', function(){
-		var _t = $(this);
-		_t.popover('hide');
-	});
-JS
-);
-?>

@@ -65,7 +65,7 @@ class AuthHelper
 		$session->remove(self::SESSION_PREFIX_ROUTES);
 
 		// Set permissions last mod time
-		$session->set(self::SESSION_PREFIX_LAST_UPDATE, filemtime(self::getPermissionsLastModFile()));
+		$session->set(self::SESSION_PREFIX_LAST_UPDATE, self::getPermissionsVersion());
 
 		// Save roles, permissions and routes in session
 		$session->set(self::SESSION_PREFIX_ROLES, array_keys(Role::getUserRoles($identity->id)));
@@ -78,11 +78,11 @@ class AuthHelper
 	 */
 	public static function ensurePermissionsUpToDate()
 	{
-		if ( !Yii::$app->user->isGuest )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
-			if ( Yii::$app->session->get(self::SESSION_PREFIX_LAST_UPDATE) != filemtime(self::getPermissionsLastModFile()) )
+			if ( Yii::$app->session->get(self::SESSION_PREFIX_LAST_UPDATE) !== self::getPermissionsVersion() )
 			{
-				static::updatePermissions(Yii::$app->user->identity);
+				static::updatePermissions(\webvimark\modules\UserManagement\models\User::component()->identity);
 			}
 		}
 	}
@@ -94,15 +94,7 @@ class AuthHelper
 	 */
 	public static function getPermissionsLastModFile()
 	{
-		$file = Yii::$app->runtimePath . '/__permissions_last_mod.txt';
-
-		if ( !is_file($file) )
-		{
-			file_put_contents($file, '');
-			chmod($file, 0777);
-		}
-
-		return $file;
+		throw new \yii\base\NotSupportedException('File-based permission invalidation has been replaced by getPermissionsVersion().');
 	}
 
 	/**
@@ -110,9 +102,16 @@ class AuthHelper
 	 */
 	public static function invalidatePermissions()
 	{
-		touch(static::getPermissionsLastModFile());
+		Yii::$app->db->createCommand()->update('{{%um_state}}', ['value' => Yii::$app->security->generateRandomString()], ['name' => 'permissions'])->execute();
+		if (Yii::$app->authManager instanceof DbManager) Yii::$app->authManager->invalidateCache();
+		if (Yii::$app->has('cache')) Yii::$app->cache->delete('__commonRoutes');
 	}
-	
+
+	public static function getPermissionsVersion(): string
+	{
+		return (string)(new \yii\db\Query())->select('value')->from('{{%um_state}}')->where(['name'=>'permissions'])->scalar();
+	}
+
 	/**
 	 * Return route without baseUrl and start it with slash
 	 *
@@ -122,6 +121,8 @@ class AuthHelper
 	 */
 	public static function unifyRoute($route)
 	{
+		if ($route === null || $route === '' || $route === []) return '/';
+		if (is_array($route) && !isset($route[0])) return '/';
 		// If its like Html::a('Create', ['create'])
 		if ( is_array($route) AND strpos($route[0], '/') === false )
 		{
@@ -358,4 +359,4 @@ class AuthHelper
 			}
 		}
 	}
-} 
+}

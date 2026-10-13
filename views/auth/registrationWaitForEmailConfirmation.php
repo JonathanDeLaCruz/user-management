@@ -1,4 +1,5 @@
 <?php
+use yii\helpers\Html;
 
 use webvimark\modules\UserManagement\UserManagementModule;
 
@@ -14,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 	<div class="alert alert-info text-center">
 		<?= UserManagementModule::t('front', 'Check your e-mail {email} for instructions to activate account', [
-			'email'=>'<b>'. $user->email .'</b>'
+			'email'=>'<b>'. \yii\helpers\Html::encode($user->email) .'</b>'
 		]) ?>
 	</div>
 

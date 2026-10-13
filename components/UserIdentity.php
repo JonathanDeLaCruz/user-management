@@ -27,7 +27,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public static function findIdentity($id)
 	{
-		return static::findOne($id);
+		return static::findOne(['id' => $id, 'status' => User::STATUS_ACTIVE]);
 	}
 
 	/**
@@ -35,7 +35,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public static function findIdentityByAccessToken($token, $type = null)
 	{
-		return static::findOne(['auth_key' => $token, 'status' => User::STATUS_ACTIVE]);
+		throw new \yii\base\NotSupportedException('Use a separate scoped, expiring API-token identity. Remember-me keys are not API tokens.');
 	}
 
 	/**
@@ -55,9 +55,10 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 * @param  string      $token confirmation token
 	 * @return static|null|User
 	 */
-	public static function findByConfirmationToken($token)
+	public static function findByConfirmationToken($token, $purpose = 'password-reset')
 	{
-		$expire    = Yii::$app->getModule('user-management')->confirmationTokenExpire;
+		if (!self::isValidConfirmationToken($token, $purpose)) return null;
+		$expire    = \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire;
 
 		$parts     = explode('_', $token);
 		$timestamp = (int)end($parts);
@@ -69,7 +70,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 		}
 
 		return static::findOne([
-			'confirmation_token' => $token,
+			'confirmation_token' => hash('sha256', $token) . '_' . $timestamp,
 			'status'             => User::STATUS_ACTIVE,
 		]);
 	}
@@ -80,9 +81,10 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 * @param  string      $token confirmation token
 	 * @return static|null|User
 	 */
-	public static function findInactiveByConfirmationToken($token)
+	public static function findInactiveByConfirmationToken($token, $purpose = 'registration')
 	{
-		$expire    = Yii::$app->getModule('user-management')->confirmationTokenExpire;
+		if (!self::isValidConfirmationToken($token, $purpose)) return null;
+		$expire    = \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire;
 
 		$parts     = explode('_', $token);
 		$timestamp = (int)end($parts);
@@ -94,7 +96,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 		}
 
 		return static::findOne([
-			'confirmation_token' => $token,
+			'confirmation_token' => hash('sha256', $token) . '_' . $timestamp,
 			'status'             => User::STATUS_INACTIVE,
 		]);
 	}
@@ -120,7 +122,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public function validateAuthKey($authKey)
 	{
-		return $this->getAuthKey() === $authKey;
+		return is_string($authKey) && is_string($this->getAuthKey()) && hash_equals($this->getAuthKey(), $authKey);
 	}
 
 	/**
@@ -171,9 +173,21 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	/**
 	 * Generates new confirmation token
 	 */
-	public function generateConfirmationToken()
+	public $confirmationToken;
+
+	public function generateConfirmationToken($purpose = 'password-reset')
 	{
-		$this->confirmation_token = Yii::$app->security->generateRandomString() . '_' . time();
+		if (!in_array($purpose, ['password-reset', 'email', 'registration'], true)) throw new \InvalidArgumentException('Invalid token purpose');
+		$timestamp = time();
+		$this->confirmationToken = $purpose . '_' . Yii::$app->security->generateRandomString(32) . '_' . $timestamp;
+		$this->confirmation_token = hash('sha256', $this->confirmationToken) . '_' . $timestamp;
+	}
+
+	private static function isValidConfirmationToken($token, $purpose): bool
+	{
+		if (!is_string($token) || !preg_match('/^' . preg_quote($purpose, '/') . '_[A-Za-z0-9_-]{32}_([0-9]{10})$/D', $token, $matches)) return false;
+		$timestamp = (int)$matches[1];
+		return $timestamp <= time() && $timestamp + \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire >= time();
 	}
 
 	/**

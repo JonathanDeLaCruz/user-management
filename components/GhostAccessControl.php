@@ -35,6 +35,11 @@ class GhostAccessControl extends ActionFilter
 	 */
 	public function beforeAction($action)
 	{
+		if (!\webvimark\modules\UserManagement\models\User::component()->isGuest && (!\webvimark\modules\UserManagement\models\User::component()->identity || (int)\webvimark\modules\UserManagement\models\User::component()->identity->status !== User::STATUS_ACTIVE)) {
+			\webvimark\modules\UserManagement\models\User::component()->logout();
+			$this->denyAccess();
+			return false;
+		}
 		if ( $action->id == 'captcha' )
 		{
 			return true;
@@ -47,27 +52,28 @@ class GhostAccessControl extends ActionFilter
 			return true;
 		}
 
-		if ( Yii::$app->user->isGuest )
+		if ( \webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
 			$this->denyAccess();
+			return false;
 		}
 
 		// If user has been deleted, then destroy session and redirect to home page
-		if ( ! Yii::$app->user->isGuest AND Yii::$app->user->identity === null )
+		if ( ! \webvimark\modules\UserManagement\models\User::component()->isGuest AND \webvimark\modules\UserManagement\models\User::component()->identity === null )
 		{
 			Yii::$app->getSession()->destroy();
 			$this->denyAccess();
 		}
 
 		// Superadmin owns everyone
-		if ( Yii::$app->user->isSuperadmin )
+		if ( \webvimark\modules\UserManagement\models\User::component()->isSuperadmin )
 		{
 			return true;
 		}
 
-		if ( Yii::$app->user->identity AND Yii::$app->user->identity->status != User::STATUS_ACTIVE)
+		if ( \webvimark\modules\UserManagement\models\User::component()->identity AND \webvimark\modules\UserManagement\models\User::component()->identity->status != User::STATUS_ACTIVE)
 		{
-			Yii::$app->user->logout();
+			\webvimark\modules\UserManagement\models\User::component()->logout();
 			Yii::$app->getResponse()->redirect(Yii::$app->getHomeUrl());
 		}
 
@@ -98,12 +104,12 @@ class GhostAccessControl extends ActionFilter
 	 */
 	protected function denyAccess()
 	{
-		if ( Yii::$app->user->getIsGuest() )
+		if ( \webvimark\modules\UserManagement\models\User::component()->getIsGuest() )
 		{
 			if (isset($_SERVER['HTTP_USER_AGENT']) && (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== false)){
-				Yii::$app->user->loginRequired(Yii::$app->request->isAjax, (strpos(Yii::$app->request->headers->get('Accept'), 'html') !== false));
+			\webvimark\modules\UserManagement\models\User::component()->loginRequired(Yii::$app->request->isAjax, (strpos((string)Yii::$app->request->headers->get('Accept'), 'html') !== false));
 			} else {
-				Yii::$app->user->loginRequired();
+				\webvimark\modules\UserManagement\models\User::component()->loginRequired();
 			}
 
 		}

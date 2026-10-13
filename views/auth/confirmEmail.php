@@ -1,7 +1,7 @@
 <?php
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
 /**
@@ -15,10 +15,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="confirm-email">
 
-	<h2 class="lte-hide-title"><?= $this->title ?></h2>
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
-	<div class="panel panel-default">
-		<div class="panel-body">
+	<div class="card um-card">
+		<div class="card-body">
 
 			<?php if ( Yii::$app->session->hasFlash('error') ): ?>
 				<div class="alert alert-warning text-center">
@@ -36,10 +36,10 @@ $this->params['breadcrumbs'][] = $this->title;
 
 				<?= $form->field($model, 'email')->textInput(['maxlength' => 255, 'autofocus'=>true]) ?>
 
-				<div class="form-group">
-					<div class="col-sm-offset-3 col-sm-9">
+				<div class="mb-3">
+					<div class="offset-sm-3 col-sm-9">
 						<?= Html::submitButton(
-							'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('front', 'Confirm'),
+							'' . UserManagementModule::t('front', 'Confirm'),
 							['class' => 'btn btn-primary']
 						) ?>
 					</div>
@@ -50,7 +50,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 				<div class="alert alert-info text-center">
 					<?= UserManagementModule::t('back', 'E-mail with activation link has been sent to <b>{email}</b>. This link will expire in {minutes} min.', [
-						'email'=>$model->user->email,
+						'email'=>Html::encode($model->user->email),
 						'minutes'=>$model->getTokenTimeLeft(true),
 					]) ?>
 				</div>

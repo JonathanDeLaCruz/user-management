@@ -6,7 +6,7 @@ use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\models\rbacDB\Permission;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use webvimark\modules\UserManagement\models\rbacDB\search\RoleSearch;
-use webvimark\components\AdminDefaultController;
+use webvimark\modules\UserManagement\components\AdminDefaultController;
 use webvimark\modules\UserManagement\UserManagementModule;
 use Yii;
 use yii\rbac\DbManager;
@@ -40,14 +40,14 @@ class RoleController extends AdminDefaultController
 			->all();
 
 		$permissions = Permission::find()
-			->andWhere(Yii::$app->getModule('user-management')->auth_item_table . '.name != :commonPermissionName', [':commonPermissionName'=>Yii::$app->getModule('user-management')->commonPermissionName])
+			->andWhere(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table . '.name != :commonPermissionName', [':commonPermissionName'=>\webvimark\modules\UserManagement\UserManagementModule::instance()->commonPermissionName])
 			->joinWith('group')
 			->all();
 
 		$permissionsByGroup = [];
 		foreach ($permissions as $permission)
 		{
-			$permissionsByGroup[@$permission->group->name][] = $permission;
+			$permissionsByGroup[($permission->group?->name ?? 'Sin grupo')][] = $permission;
 		}
 
 		$childRoles = $authManager->getChildren($role->name);
@@ -70,7 +70,7 @@ class RoleController extends AdminDefaultController
 	{
 		$role = $this->findModel($id);
 
-		$newChildRoles = Yii::$app->request->post('child_roles', []);
+		$newChildRoles = (array)Yii::$app->request->post('child_roles', []);
 
 		$dbManager = Yii::$app->authManager instanceof DbManager ? Yii::$app->authManager : new DbManager();
 
@@ -108,7 +108,7 @@ class RoleController extends AdminDefaultController
 	{
 		$role = $this->findModel($id);
 
-		$newChildPermissions = Yii::$app->request->post('child_permissions', []);
+		$newChildPermissions = (array)Yii::$app->request->post('child_permissions', []);
 
 		$dbManager = Yii::$app->authManager instanceof DbManager ? Yii::$app->authManager : new DbManager();
 

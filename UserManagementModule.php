@@ -7,6 +7,12 @@ use yii\helpers\ArrayHelper;
 
 class UserManagementModule extends \yii\base\Module
 {
+	public static function instance(): self
+	{
+		$module = Yii::$app->getModule('user-management');
+		if (!$module instanceof self) throw new \yii\base\InvalidConfigException('Configure the user-management module.');
+		return $module;
+	}
 	const SESSION_LAST_ATTEMPT = '_um_last_attempt';
 	const SESSION_ATTEMPT_COUNT = '_um_attempt_count';
 
@@ -131,7 +137,7 @@ class UserManagementModule extends \yii\base\Module
 	 *
 	 * @var string
 	 */
-	 public $passwordRegexp = '/^(.*)+$/';
+	 public $passwordRegexp = '/^.{12,}$/us';
 
 	/**
 	 * Affects only web interface in "/user-management/user-permission/set" route. Tt means you still can assign
@@ -165,8 +171,8 @@ class UserManagementModule extends \yii\base\Module
 	 */
 	public $captchaOptions = [
 		'class'     => 'yii\captcha\CaptchaAction',
-		'minLength' => 3,
-		'maxLength' => 4,
+		'minLength' => 5,
+		'maxLength' => 6,
 		'offset'    => 5
 	];
 
@@ -228,7 +234,7 @@ class UserManagementModule extends \yii\base\Module
 			Yii::$app->i18n->translations['modules/user-management/*'] = [
 				'class'          => 'yii\i18n\PhpMessageSource',
 				'sourceLanguage' => 'en',
-				'basePath'       => '@vendor/webvimark/module-user-management/messages',
+				'basePath'       => __DIR__ . '/messages',
 				'fileMap'        => [
 					'modules/user-management/back' => 'back.php',
 					'modules/user-management/front' => 'front.php',
@@ -244,36 +250,20 @@ class UserManagementModule extends \yii\base\Module
 	 *
 	 * @return bool
 	 */
-	public function checkAttempts()
+	public function checkAttempts($subject = '', $purpose = 'authentication')
 	{
-		$lastAttempt = Yii::$app->session->get(static::SESSION_LAST_ATTEMPT);
-
-		if ( $lastAttempt )
-		{
-			$attemptsCount = Yii::$app->session->get(static::SESSION_ATTEMPT_COUNT, 0);
-
-			Yii::$app->session->set(static::SESSION_ATTEMPT_COUNT, ++$attemptsCount);
-
-			// If last attempt was made more than X seconds ago then reset counters
-			if ( ( $lastAttempt + $this->attemptsTimeout ) < time() )
-			{
-				Yii::$app->session->set(static::SESSION_LAST_ATTEMPT, time());
-				Yii::$app->session->set(static::SESSION_ATTEMPT_COUNT, 1);
-
-				return true;
-			}
-			elseif ( $attemptsCount > $this->maxAttempts )
-			{
-				return false;
-			}
-
-			return true;
+		$window = max(1, (int)$this->attemptsTimeout);
+		$expires = (int)(floor(time() / $window) + 1) * $window;
+		$ip = Yii::$app instanceof \yii\web\Application ? Yii::$app->request->userIP : 'console';
+		$allowed = true;
+		foreach (['ip:' . $ip, 'account:' . mb_strtolower(trim((string)$subject))] as $identifier) {
+			$key = hash('sha256', $purpose . '|' . $identifier . '|' . $expires);
+			Yii::$app->db->createCommand()->upsert('{{%um_attempt}}', ['key'=>$key, 'count'=>1, 'expires_at'=>$expires], ['count'=>new \yii\db\Expression('[[count]] + 1')])->execute();
+			$count = (int)(new \yii\db\Query())->select('count')->from('{{%um_attempt}}')->where(['key'=>$key])->scalar();
+			$allowed = $count <= $this->maxAttempts && $allowed;
 		}
-
-		Yii::$app->session->set(static::SESSION_LAST_ATTEMPT, time());
-		Yii::$app->session->set(static::SESSION_ATTEMPT_COUNT, 1);
-
-		return true;
+		Yii::$app->db->createCommand()->delete('{{%um_attempt}}', ['<', 'expires_at', time()])->execute();
+		return $allowed;
 	}
 
 	/**

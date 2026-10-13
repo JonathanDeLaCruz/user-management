@@ -2,7 +2,7 @@
 
 namespace webvimark\modules\UserManagement\controllers;
 
-use webvimark\components\AdminDefaultController;
+use webvimark\modules\UserManagement\components\AdminDefaultController;
 use Yii;
 use webvimark\modules\UserManagement\models\User;
 use webvimark\modules\UserManagement\models\search\UserSearch;
@@ -46,7 +46,7 @@ class UserController extends AdminDefaultController
 	 */
 	public function actionChangePassword($id)
 	{
-		$model = User::findOne($id);
+		$model = $this->findModel($id);
 
 		if ( !$model )
 		{

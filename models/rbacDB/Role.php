@@ -54,7 +54,8 @@ class Role extends AbstractItem
 	 */
 	public static function getAvailableRoles($showAll = false, $asArray = false)
 	{
-		$condition = (Yii::$app->user->isSuperAdmin OR $showAll) ? [] : ['name'=>Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROLES)];
+		AuthHelper::ensurePermissionsUpToDate();
+		$condition = (\webvimark\modules\UserManagement\models\User::component()->isSuperadmin OR $showAll) ? [] : ['name'=>Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROLES, [])];
 
 		$result = static::find()->andWhere($condition)->all();
 
@@ -95,7 +96,7 @@ class Role extends AbstractItem
 		try
 		{
 			Yii::$app->db->createCommand()
-				->insert(Yii::$app->getModule('user-management')->auth_item_child_table, [
+				->insert(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_child_table, [
 					'parent' => $role->name,
 					'child'  => $permission->name,
 				])->execute();
@@ -118,7 +119,7 @@ class Role extends AbstractItem
 			try
 			{
 				Yii::$app->db->createCommand()
-					->insert(Yii::$app->getModule('user-management')->auth_item_child_table, [
+					->insert(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_child_table, [
 						'parent' => $permission->name,
 						'child'  => $route,
 					])->execute();

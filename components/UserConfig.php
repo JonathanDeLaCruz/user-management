@@ -7,6 +7,9 @@ use Yii;
 
 /**
  * Class UserConfig
+ * @extends User<\webvimark\modules\UserManagement\models\User>
+ * @property-read bool $isSuperadmin
+ * @property-read string|null $username
  * @package webvimark\modules\UserManagement\components
  */
 class UserConfig extends User
@@ -20,25 +23,25 @@ class UserConfig extends User
 	 * @inheritdoc
 	 */
 	public $enableAutoLogin = true;
-	
+
 	/**
  	 * @inheritdoc
 	 */
 	public $cookieLifetime = 2592000;
-  
+
 	/**
 	 * @inheritdoc
 	 */
 	public $loginUrl = ['/user-management/auth/login'];
 
 	/**
-	 * Allows to call Yii::$app->user->isSuperadmin
+	 * Allows to call \webvimark\modules\UserManagement\models\User::component()->isSuperadmin
 	 *
 	 * @return bool
 	 */
 	public function getIsSuperadmin()
 	{
-		return @Yii::$app->user->identity->superadmin == 1;
+		return $this->identity !== null && (int)$this->identity->status === \webvimark\modules\UserManagement\models\User::STATUS_ACTIVE && (int)$this->identity->superadmin === 1;
 	}
 
 	/**
@@ -46,7 +49,7 @@ class UserConfig extends User
 	 */
 	public function getUsername()
 	{
-		return @Yii::$app->user->identity->username;
+		return $this->identity?->username;
 	}
 
 	/**

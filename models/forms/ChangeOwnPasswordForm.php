@@ -34,8 +34,8 @@ class ChangeOwnPasswordForm extends Model
 		return [
 			[['password', 'repeat_password'], 'required'],
 			[['password', 'repeat_password', 'current_password'], 'string', 'max'=>255],
-			[['password', 'repeat_password', 'current_password'], 'trim'],
-			['password', 'match', 'pattern' => Yii::$app->getModule('user-management')->passwordRegexp],
+			['password', 'string', 'min' => 12, 'max' => 72],
+			['password', 'match', 'pattern' => \webvimark\modules\UserManagement\UserManagementModule::instance()->passwordRegexp],
 
 			['repeat_password', 'compare', 'compareAttribute'=>'password'],
 
@@ -59,7 +59,7 @@ class ChangeOwnPasswordForm extends Model
 	 */
 	public function validateCurrentPassword()
 	{
-		if ( !Yii::$app->getModule('user-management')->checkAttempts() )
+		if ( !\webvimark\modules\UserManagement\UserManagementModule::instance()->checkAttempts((string)$this->user->id, 'password-change') )
 		{
 			$this->addError('current_password', UserManagementModule::t('back', 'Too many attempts'));
 
@@ -84,8 +84,16 @@ class ChangeOwnPasswordForm extends Model
 			return false;
 		}
 
+		$expectedToken = $this->user->confirmation_token;
+		if ($this->scenario === 'restoreViaEmail') {
+			if (!$expectedToken) return false;
+			$this->user->setPassword($this->password);
+			$this->user->generateAuthKey();
+			return User::updateAll(['password_hash'=>$this->user->password_hash, 'auth_key'=>$this->user->auth_key, 'confirmation_token'=>null, 'updated_at'=>time()], ['id'=>$this->user->id, 'confirmation_token'=>$expectedToken]) === 1;
+		}
 		$this->user->password = $this->password;
 		$this->user->removeConfirmationToken();
+		$this->user->generateAuthKey();
 		return $this->user->save();
 	}
 }

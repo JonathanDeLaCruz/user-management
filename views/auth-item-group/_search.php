@@ -25,9 +25,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'updated_at') ?>
 
-    <div class="form-group">
+    <div class="mb-3">
         <?= Html::submitButton(UserManagementModule::t('back', 'Search'), ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton(UserManagementModule::t('back', 'Reset'), ['class' => 'btn btn-default']) ?>
+        <?= Html::resetButton(UserManagementModule::t('back', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

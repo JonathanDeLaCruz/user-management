@@ -34,7 +34,7 @@ class UserVisitLogSearch extends UserVisitLog
 		$query->joinWith(['user']);
 
 		// Don't let non-superadmin view superadmin activity
-		if ( !Yii::$app->user->isSuperadmin )
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isSuperadmin )
 		{
 			$query->andWhere([User::tableName() . '.superadmin'=>0]);
 		}
@@ -42,7 +42,7 @@ class UserVisitLogSearch extends UserVisitLog
 		$dataProvider = new ActiveDataProvider([
 			'query' => $query,
 			'pagination' => [
-				'pageSize' => Yii::$app->request->cookies->getValue('_grid_page_size', 20),
+				'pageSize' => max(10, min(100, (int)Yii::$app->request->cookies->getValue('_grid_page_size', 20))),
 			],
 			'sort'=>[
 				'defaultOrder'=>['id'=> SORT_DESC],
@@ -66,7 +66,7 @@ class UserVisitLogSearch extends UserVisitLog
 			$this->tableName() . '.id' => $this->id,
 		]);
 
-        	$query->andFilterWhere(['like', User::tableName() . '.username', $this->user_id])
+	$query->andFilterWhere(['like', User::tableName() . '.username', $this->user_id])
 			->andFilterWhere(['like', static::tableName() . '.ip', $this->ip])
 			->andFilterWhere(['like', static::tableName() . '.os', $this->os])
 			->andFilterWhere(['like', static::tableName() . '.browser', $this->browser])

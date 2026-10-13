@@ -1,0 +1,10 @@
+PHPUnit 11.5.57 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.3.35
+Configuration: D:\codex\yii2-user-management\phpunit.xml.dist
+
+.............                                                     13 / 13 (100%)
+
+Time: 00:21.104, Memory: 16.00 MB
+
+OK (13 tests, 138 assertions)

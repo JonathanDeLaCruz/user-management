@@ -6,8 +6,8 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\ArrayHelper;
 use yii\widgets\Pjax;
-use webvimark\extensions\GridBulkActions\GridBulkActions;
-use webvimark\extensions\GridPageSize\GridPageSize;
+use webvimark\modules\UserManagement\widgets\GridBulkActions;
+use webvimark\modules\UserManagement\widgets\GridPageSize;
 use yii\grid\GridView;
 
 /**
@@ -21,25 +21,25 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="auth-item-group-index">
 
-	<h2 class="lte-hide-title"><?= $this->title ?></h2>
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
 	<?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
-	<div class="panel panel-default">
+	<div class="card um-card">
 
-		<div class="panel-body">
+		<div class="card-body">
 			<div class="row">
 				<div class="col-sm-6">
 					<p>
 						<?= GhostHtml::a(
-							'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Create'),
+							'' . UserManagementModule::t('back', 'Create'),
 							['create'],
 							['class' => 'btn btn-success']
 						) ?>
 					</p>
 				</div>
 
-				<div class="col-sm-6 text-right">
+				<div class="col-sm-6 text-end">
 					<?= GridPageSize::widget(['pjaxId'=>'auth-item-group-grid-pjax']) ?>
 				</div>
 			</div>
@@ -52,13 +52,13 @@ $this->params['breadcrumbs'][] = $this->title;
 			<?= GridView::widget([
 				'id'=>'auth-item-group-grid',
 				'dataProvider' => $dataProvider,
-				'pager'=>[
+				'pager'=>['class' => 'yii\bootstrap5\LinkPager',
 					'options'=>['class'=>'pagination pagination-sm'],
 					'hideOnSinglePage'=>true,
 					'lastPageLabel'=>'>>',
 					'firstPageLabel'=>'<<',
 				],
-				'layout'=>'{items}<div class="row"><div class="col-sm-8">{pager}</div><div class="col-sm-4 text-right">{summary}'.GridBulkActions::widget([
+				'layout'=>'{items}<div class="row"><div class="col-sm-8">{pager}</div><div class="col-sm-4 text-end">{summary}'.GridBulkActions::widget([
 						'gridId'=>'auth-item-group-grid',
 						'actions'=>[Url::to(['bulk-delete'])=>GridBulkActions::t('app', 'Delete'),],
 						]).'</div></div>',
@@ -69,7 +69,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					[
 						'attribute'=>'name',
 						'value'=>function($model){
-								return Html::a($model->name, ['update', 'id'=>$model->code], ['data-pjax'=>0]);
+								return Html::a(Html::encode($model->name), ['update', 'id'=>$model->code], ['data-pjax'=>0]);
 							},
 						'format'=>'raw',
 					],
@@ -77,12 +77,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
 					['class' => 'yii\grid\CheckboxColumn', 'options'=>['style'=>'width:10px'] ],
 					[
-						'class' => 'yii\grid\ActionColumn',
+						'class' => 'webvimark\modules\UserManagement\widgets\ActionColumn',
 						'contentOptions'=>['style'=>'width:70px; text-align:center;'],
 					],
 				],
 			]); ?>
-		
+
 			<?php Pjax::end() ?>
 		</div>
 	</div>

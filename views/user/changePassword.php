@@ -1,7 +1,7 @@
 <?php
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
 /**
@@ -16,10 +16,10 @@ $this->params['breadcrumbs'][] = UserManagementModule::t('back', 'Changing passw
 ?>
 <div class="user-update">
 
-	<h2 class="lte-hide-title"><?= $this->title ?></h2>
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
-	<div class="panel panel-default">
-		<div class="panel-body">
+	<div class="card um-card">
+		<div class="card-body">
 
 			<div class="user-form">
 
@@ -33,16 +33,16 @@ $this->params['breadcrumbs'][] = UserManagementModule::t('back', 'Changing passw
 				<?= $form->field($model, 'repeat_password')->passwordInput(['maxlength' => 255, 'autocomplete'=>'off']) ?>
 
 
-				<div class="form-group">
-					<div class="col-sm-offset-3 col-sm-9">
+				<div class="mb-3">
+					<div class="offset-sm-3 col-sm-9">
 						<?php if ( $model->isNewRecord ): ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Create'),
+								'' . UserManagementModule::t('back', 'Create'),
 								['class' => 'btn btn-success']
 							) ?>
 						<?php else: ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+								'' . UserManagementModule::t('back', 'Save'),
 								['class' => 'btn btn-primary']
 							) ?>
 						<?php endif; ?>

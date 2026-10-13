@@ -55,7 +55,7 @@ abstract class AbstractItem extends ActiveRecord
 	 */
 	public static function create($name, $description = null, $groupCode = null, $ruleName = null, $data = null)
 	{
-		$item = new static;
+		$item = Yii::createObject(static::class);
 
 		$item->type = static::ITEM_TYPE;
 		$item->name = $name;
@@ -81,16 +81,20 @@ abstract class AbstractItem extends ActiveRecord
 	 */
 	public static function addChildren($parentName, $childrenNames, $throwException = false)
 	{
-		$parent = (object)['name'=>$parentName];
+		$parent = static::findOne(['name'=>$parentName]);
+		if (!$parent) throw new \InvalidArgumentException('Parent not found');
 
 		$childrenNames = (array) $childrenNames;
 
 		$dbManager = Yii::$app->authManager instanceof DbManager ? Yii::$app->authManager : new DbManager();
+		$parent = new ($parent->type === self::TYPE_ROLE ? \yii\rbac\Role::class : \yii\rbac\Permission::class)(['name'=>$parent->name]);
 
-		static::beforeAddChildren($parentName, $childrenNames, $throwException = false);
+		static::beforeAddChildren($parentName, $childrenNames, $throwException);
 		foreach ($childrenNames as $childName)
 		{
-			$child = (object)['name'=>$childName];
+			$child = Role::findOne(['name'=>$childName]) ?? Permission::findOne(['name'=>$childName]) ?? Route::findOne(['name'=>$childName]);
+			if (!$child) throw new \InvalidArgumentException('Child not found');
+			$child = new ($child->type === self::TYPE_ROLE ? \yii\rbac\Role::class : \yii\rbac\Permission::class)(['name'=>$child->name]);
 
 			try
 			{
@@ -120,7 +124,7 @@ abstract class AbstractItem extends ActiveRecord
 		foreach ($childrenNames as $childName)
 		{
 			Yii::$app->db->createCommand()
-				->delete(Yii::$app->getModule('user-management')->auth_item_child_table, ['parent' => $parentName, 'child' => $childName])
+				->delete(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_child_table, ['parent' => $parentName, 'child' => $childName])
 				->execute();
 		}
 
@@ -161,7 +165,7 @@ abstract class AbstractItem extends ActiveRecord
 	 */
 	public static function tableName()
 	{
-		return Yii::$app->getModule('user-management')->auth_item_table;
+		return \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table;
 	}
 
 	/**
@@ -193,7 +197,7 @@ abstract class AbstractItem extends ActiveRecord
 	{
 		if ( $this->isNewRecord || ( $this->oldAttributes['name'] && $this->oldAttributes['name'] !== $this->name ) )
 		{
-			if ( Role::find()->where(['name'=>$this->name])->exists() )
+			if ( (new \yii\db\Query())->from(static::tableName())->where(['name'=>$this->name])->exists() )
 			{
 				$this->addError('name', Yii::t('yii', '{attribute} "{value}" has already been taken.', [
 					'attribute' => $this->getAttributeLabel($attribute),
@@ -209,7 +213,7 @@ abstract class AbstractItem extends ActiveRecord
 	 */
 	public static function find()
 	{
-		return parent::find()->andWhere([Yii::$app->getModule('user-management')->auth_item_table . '.type'=>static::ITEM_TYPE]);
+		return parent::find()->andWhere([\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table . '.type'=>static::ITEM_TYPE]);
 	}
 
 	/**
@@ -267,7 +271,7 @@ abstract class AbstractItem extends ActiveRecord
 
 	public static function beforeRemoveChildren($parentName, $childrenNames)
 	{
-		$event = new AbstractItemEvent(compact('parentName', 'childrenNames', 'throwException'));
+		$event = new AbstractItemEvent(compact('parentName', 'childrenNames'));
 		$event->trigger(get_called_class(), self::EVENT_BEFORE_REMOVE_CHILDREN, $event);
 	}
-} 
+}

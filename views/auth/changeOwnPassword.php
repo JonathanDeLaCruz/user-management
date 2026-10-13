@@ -1,7 +1,7 @@
 <?php
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use yii\bootstrap\ActiveForm;
+use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
 /**
@@ -14,10 +14,10 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="change-own-password">
 
-	<h2 class="lte-hide-title"><?= $this->title ?></h2>
+	<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
-	<div class="panel panel-default">
-		<div class="panel-body">
+	<div class="card um-card">
+		<div class="card-body">
 
 			<?php if ( Yii::$app->session->hasFlash('success') ): ?>
 				<div class="alert alert-success text-center">
@@ -43,10 +43,10 @@ $this->params['breadcrumbs'][] = $this->title;
 				<?= $form->field($model, 'repeat_password')->passwordInput(['maxlength' => 255, 'autocomplete'=>'off']) ?>
 
 
-				<div class="form-group">
-					<div class="col-sm-offset-3 col-sm-9">
+				<div class="mb-3">
+					<div class="offset-sm-3 col-sm-9">
 						<?= Html::submitButton(
-							'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+							'' . UserManagementModule::t('back', 'Save'),
 							['class' => 'btn btn-primary']
 						) ?>
 					</div>

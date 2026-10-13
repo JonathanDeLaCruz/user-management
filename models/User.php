@@ -2,8 +2,8 @@
 
 namespace webvimark\modules\UserManagement\models;
 
-use webvimark\helpers\LittleBigHelper;
-use webvimark\helpers\Singleton;
+use webvimark\modules\UserManagement\components\LittleBigHelper;
+use webvimark\modules\UserManagement\components\Singleton;
 use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\components\UserIdentity;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
@@ -31,6 +31,12 @@ use yii\behaviors\TimestampBehavior;
  */
 class User extends UserIdentity
 {
+	public static function component(): \webvimark\modules\UserManagement\components\UserConfig
+	{
+		$component = Yii::$app->user;
+		if (!$component instanceof \webvimark\modules\UserManagement\components\UserConfig) throw new \yii\base\InvalidConfigException('Configure UserConfig as the application user component.');
+		return $component;
+	}
 	const STATUS_ACTIVE = 1;
 	const STATUS_INACTIVE = 0;
 	const STATUS_BANNED = -1;
@@ -59,21 +65,7 @@ class User extends UserIdentity
 	 */
 	public static function getCurrentUser($fromSingleton = true)
 	{
-		if ( !$fromSingleton )
-		{
-			return static::findOne(Yii::$app->user->id);
-		}
-
-		$user = Singleton::getData('__currentUser');
-
-		if ( !$user )
-		{
-			$user = static::findOne(Yii::$app->user->id);
-
-			Singleton::setData('__currentUser', $user);
-		}
-
-		return $user;
+		return $fromSingleton ? static::component()->identity : static::findIdentity(static::component()->id);
 	}
 
 	/**
@@ -89,7 +81,7 @@ class User extends UserIdentity
 		try
 		{
 			Yii::$app->db->createCommand()
-				->insert(Yii::$app->getModule('user-management')->auth_assignment_table, [
+				->insert(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_assignment_table, [
 					'user_id' => $userId,
 					'item_name' => $roleName,
 					'created_at' => time(),
@@ -116,7 +108,7 @@ class User extends UserIdentity
 	public static function revokeRole($userId, $roleName)
 	{
 		$result = Yii::$app->db->createCommand()
-			->delete(Yii::$app->getModule('user-management')->auth_assignment_table, ['user_id' => $userId, 'item_name' => $roleName])
+			->delete(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_assignment_table, ['user_id' => $userId, 'item_name' => $roleName])
 			->execute() > 0;
 
 		if ( $result )
@@ -135,7 +127,7 @@ class User extends UserIdentity
 	 */
 	public static function hasRole($roles, $superAdminAllowed = true)
 	{
-		if ( $superAdminAllowed AND Yii::$app->user->isSuperadmin )
+		if ( $superAdminAllowed AND static::component()->isSuperadmin )
 		{
 			return true;
 		}
@@ -154,14 +146,14 @@ class User extends UserIdentity
 	 */
 	public static function hasPermission($permission, $superAdminAllowed = true)
 	{
-		if ( $superAdminAllowed AND Yii::$app->user->isSuperadmin )
+		if ( $superAdminAllowed AND static::component()->isSuperadmin )
 		{
 			return true;
 		}
 
 		AuthHelper::ensurePermissionsUpToDate();
 
-		return in_array($permission, Yii::$app->session->get(AuthHelper::SESSION_PREFIX_PERMISSIONS,[]));
+		return !static::component()->isGuest && Yii::$app->authManager->checkAccess(static::component()->id, $permission);
 	}
 
 	/**
@@ -180,7 +172,7 @@ class User extends UserIdentity
 	 */
 	public static function canRoute($route, $superAdminAllowed = true)
 	{
-		if ( $superAdminAllowed AND Yii::$app->user->isSuperadmin )
+		if ( $superAdminAllowed AND static::component()->isSuperadmin )
 		{
 			return true;
 		}
@@ -194,7 +186,10 @@ class User extends UserIdentity
 
 		AuthHelper::ensurePermissionsUpToDate();
 
-		return Route::isRouteAllowed($baseRoute, Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROUTES,[]));
+		foreach (Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROUTES,[]) as $allowedRoute) {
+			if (Route::isSubRoute($allowedRoute, $baseRoute) && Yii::$app->authManager->checkAccess(static::component()->id, $allowedRoute)) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -229,7 +224,7 @@ class User extends UserIdentity
 	*/
 	public static function tableName()
 	{
-		return Yii::$app->getModule('user-management')->user_table;
+		return \webvimark\modules\UserManagement\UserManagementModule::instance()->user_table;
 	}
 
 	/**
@@ -262,9 +257,9 @@ class User extends UserIdentity
 			['bind_to_ip', 'string', 'max' => 255],
 
 			['password', 'required', 'on'=>['newUser', 'changePassword']],
-			['password', 'string', 'max' => 255, 'on'=>['newUser', 'changePassword']],
-			['password', 'trim', 'on'=>['newUser', 'changePassword']],
-			['password', 'match', 'pattern' => Yii::$app->getModule('user-management')->passwordRegexp],
+			['password', 'string', 'min' => 12, 'max' => 72, 'on'=>['newUser', 'changePassword']],
+			['password', 'string', 'on'=>['newUser', 'changePassword']],
+			['password', 'match', 'pattern' => \webvimark\modules\UserManagement\UserManagementModule::instance()->passwordRegexp],
 
 			['repeat_password', 'required', 'on'=>['newUser', 'changePassword']],
 			['repeat_password', 'compare', 'compareAttribute'=>'password'],
@@ -338,7 +333,7 @@ class User extends UserIdentity
 	public function getRoles()
 	{
 		return $this->hasMany(Role::className(), ['name' => 'item_name'])
-			->viaTable(Yii::$app->getModule('user-management')->auth_assignment_table, ['user_id'=>'id']);
+			->viaTable(\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_assignment_table, ['user_id'=>'id']);
 	}
 
 
@@ -354,29 +349,29 @@ class User extends UserIdentity
 		{
 			if ( php_sapi_name() != 'cli' )
 			{
-				$this->registration_ip = LittleBigHelper::getRealIp();
+				$this->registration_ip = Yii::$app->request->userIP;
 			}
 			$this->generateAuthKey();
 		}
 		else
 		{
-			// Console doesn't have Yii::$app->user, so we skip it for console
+			// Console doesn't have static::component(), so we skip it for console
 			if ( php_sapi_name() != 'cli' )
 			{
-				if ( Yii::$app->user->id == $this->id )
+				if ( static::component()->id == $this->id )
 				{
 					// Make sure user will not deactivate himself
 					$this->status = static::STATUS_ACTIVE;
 
 					// Superadmin could not demote himself
-					if ( Yii::$app->user->isSuperadmin AND $this->superadmin != 1 )
+					if ( static::component()->isSuperadmin AND $this->superadmin != 1 )
 					{
 						$this->superadmin = 1;
 					}
 				}
 
 				// Don't let non-superadmin edit superadmin
-				if ( isset($this->oldAttributes['superadmin']) && !Yii::$app->user->isSuperadmin && $this->oldAttributes['superadmin'] == 1 )
+				if ( isset($this->oldAttributes['superadmin']) && !static::component()->isSuperadmin && $this->oldAttributes['superadmin'] == 1 )
 				{
 					return false;
 				}
@@ -387,6 +382,7 @@ class User extends UserIdentity
 		if ( $this->password )
 		{
 			$this->setPassword($this->password);
+			if (!$insert) $this->generateAuthKey();
 		}
 
 		return parent::beforeSave($insert);
@@ -399,17 +395,17 @@ class User extends UserIdentity
 	 */
 	public function beforeDelete()
 	{
-		// Console doesn't have Yii::$app->user, so we skip it for console
+		// Console doesn't have static::component(), so we skip it for console
 		if ( php_sapi_name() != 'cli' )
 		{
 			// Don't let delete yourself
-			if ( Yii::$app->user->id == $this->id )
+			if ( static::component()->id == $this->id )
 			{
 				return false;
 			}
 
 			// Don't let non-superadmin delete superadmin
-			if ( !Yii::$app->user->isSuperadmin AND $this->superadmin == 1 )
+			if ( !static::component()->isSuperadmin AND $this->superadmin == 1 )
 			{
 				return false;
 			}

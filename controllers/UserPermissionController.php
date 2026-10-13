@@ -2,7 +2,7 @@
 
 namespace webvimark\modules\UserManagement\controllers;
 
-use webvimark\components\BaseController;
+use webvimark\modules\UserManagement\components\BaseController;
 use webvimark\modules\UserManagement\models\rbacDB\Permission;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use webvimark\modules\UserManagement\models\User;
@@ -31,14 +31,14 @@ class UserPermissionController extends BaseController
 		$permissionsByGroup = [];
 		$permissions = Permission::find()
 			->andWhere([
-				Yii::$app->getModule('user-management')->auth_item_table . '.name'=>array_keys(Permission::getUserPermissions($user->id))
+				\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table . '.name'=>array_keys(Permission::getUserPermissions($user->id))
 			])
 			->joinWith('group')
 			->all();
 
 		foreach ($permissions as $permission)
 		{
-			$permissionsByGroup[@$permission->group->name][] = $permission;
+			$permissionsByGroup[($permission->group?->name ?? 'Sin grupo')][] = $permission;
 		}
 
 		return $this->renderIsAjax('set', compact('user', 'permissionsByGroup'));
@@ -51,7 +51,10 @@ class UserPermissionController extends BaseController
 	 */
 	public function actionSetRoles($id)
 	{
-		if ( !Yii::$app->user->isSuperadmin AND Yii::$app->user->id == $id )
+		$target = User::findOne($id);
+		if (!$target) throw new NotFoundHttpException();
+		if ($target->superadmin && !\webvimark\modules\UserManagement\models\User::component()->isSuperadmin) throw new \yii\web\ForbiddenHttpException();
+		if ( !\webvimark\modules\UserManagement\models\User::component()->isSuperadmin AND \webvimark\modules\UserManagement\models\User::component()->id == $id )
 		{
 			Yii::$app->session->setFlash('error', UserManagementModule::t('back', 'You can not change own permissions'));
 			return $this->redirect(['set', 'id'=>$id]);
@@ -60,10 +63,11 @@ class UserPermissionController extends BaseController
 		$oldAssignments = array_keys(Role::getUserRoles($id));
 
 		// To be sure that user didn't attempt to assign himself some unavailable roles
-		$newAssignments = array_intersect(Role::getAvailableRoles(Yii::$app->user->isSuperAdmin, true), (array)Yii::$app->request->post('roles', []));
+		$newAssignments = array_intersect(Role::getAvailableRoles(\webvimark\modules\UserManagement\models\User::component()->isSuperadmin, true), (array)Yii::$app->request->post('roles', []));
 
 		$toAssign = array_diff($newAssignments, $oldAssignments);
 		$toRevoke = array_diff($oldAssignments, $newAssignments);
+		if (!\webvimark\modules\UserManagement\models\User::component()->isSuperadmin) $toRevoke = array_intersect($toRevoke, Role::getAvailableRoles(false, true));
 
 		foreach ($toRevoke as $role)
 		{

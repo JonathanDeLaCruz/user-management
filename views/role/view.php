@@ -21,7 +21,7 @@ $this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Ro
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<h2 class="lte-hide-title"><?= $this->title ?></h2>
+<h2 class="lte-hide-title"><?= Html::encode($this->title) ?></h2>
 
 <?php if ( Yii::$app->session->hasFlash('success') ): ?>
 	<div class="alert alert-success text-center">
@@ -36,24 +36,24 @@ $this->params['breadcrumbs'][] = $this->title;
 
 <div class="row">
 	<div class="col-sm-4">
-		<div class="panel panel-default">
-			<div class="panel-heading">
+		<div class="card um-card">
+			<div class="card-header">
 				<strong>
-					<span class="glyphicon glyphicon-th"></span> <?= UserManagementModule::t('back', 'Child roles') ?>
+					<?= UserManagementModule::t('back', 'Child roles') ?>
 				</strong>
 			</div>
-			<div class="panel-body">
+			<div class="card-body">
 				<?= Html::beginForm(['set-child-roles', 'id'=>$role->name]) ?>
 
 				<?php foreach ($allRoles as $aRole): ?>
 					<label>
 						<?php $isChecked = in_array($aRole['name'], ArrayHelper::map($childRoles, 'name', 'name')) ? 'checked' : '' ?>
-						<input type="checkbox" <?= $isChecked ?> name="child_roles[]" value="<?= $aRole['name'] ?>">
-						<?= $aRole['description'] ?>
+						<input type="checkbox" <?= $isChecked ?> name="child_roles[]" value="<?= Html::encode($aRole['name']) ?>">
+						<?= Html::encode($aRole['description']) ?>
 					</label>
 
 					<?= GhostHtml::a(
-						'<span class="glyphicon glyphicon-edit"></span>',
+						'',
 						['/user-management/role/view', 'id'=>$aRole['name']],
 						['target'=>'_blank']
 					) ?>
@@ -63,7 +63,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 				<hr/>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+					'' . UserManagementModule::t('back', 'Save'),
 					['class'=>'btn btn-primary btn-sm']
 				) ?>
 
@@ -73,30 +73,30 @@ $this->params['breadcrumbs'][] = $this->title;
 	</div>
 
 	<div class="col-sm-8">
-		<div class="panel panel-default">
-			<div class="panel-heading">
+		<div class="card um-card">
+			<div class="card-header">
 				<strong>
-					<span class="glyphicon glyphicon-th"></span> <?= UserManagementModule::t('back', 'Permissions') ?>
+					<?= UserManagementModule::t('back', 'Permissions') ?>
 				</strong>
 			</div>
-			<div class="panel-body">
+			<div class="card-body">
 				<?= Html::beginForm(['set-child-permissions', 'id'=>$role->name]) ?>
 
 				<div class="row">
 					<?php foreach ($permissionsByGroup as $groupName => $permissions): ?>
 						<div class="col-sm-6">
 							<fieldset>
-								<legend><?= $groupName ?></legend>
+								<legend><?= Html::encode($groupName) ?></legend>
 
 								<?php foreach ($permissions as $permission): ?>
 									<label>
 										<?php $isChecked = in_array($permission->name, ArrayHelper::map($currentPermissions, 'name', 'name')) ? 'checked' : '' ?>
-										<input type="checkbox" <?= $isChecked ?> name="child_permissions[]" value="<?= $permission->name ?>">
-										<?= $permission->description ?>
+										<input type="checkbox" <?= $isChecked ?> name="child_permissions[]" value="<?= Html::encode($permission->name) ?>">
+										<?= Html::encode($permission->description) ?>
 									</label>
 
 									<?= GhostHtml::a(
-										'<span class="glyphicon glyphicon-edit"></span>',
+										'',
 										['/user-management/permission/view', 'id'=>$permission->name],
 										['target'=>'_blank']
 									) ?>
@@ -113,7 +113,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 				<hr/>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+					'' . UserManagementModule::t('back', 'Save'),
 					['class'=>'btn btn-primary btn-sm']
 				) ?>
 
@@ -123,18 +123,3 @@ $this->params['breadcrumbs'][] = $this->title;
 		</div>
 	</div>
 </div>
-
-<?php
-$this->registerJs(<<<JS
-
-$('.role-help-btn').off('mouseover mouseleave')
-	.on('mouseover', function(){
-		var _t = $(this);
-		_t.popover('show');
-	}).on('mouseleave', function(){
-		var _t = $(this);
-		_t.popover('hide');
-	});
-JS
-);
-?>
