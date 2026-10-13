@@ -209,11 +209,11 @@ class UserManagementModule extends \yii\base\Module
 	public static function menuItems()
 	{
 		return [
-			['label' => '<i class="fa fa-angle-double-right"></i> ' . UserManagementModule::t('back', 'Users'), 'url' => ['/user-management/user/index']],
-			['label' => '<i class="fa fa-angle-double-right"></i> ' . UserManagementModule::t('back', 'Roles'), 'url' => ['/user-management/role/index']],
-			['label' => '<i class="fa fa-angle-double-right"></i> ' . UserManagementModule::t('back', 'Permissions'), 'url' => ['/user-management/permission/index']],
-			['label' => '<i class="fa fa-angle-double-right"></i> ' . UserManagementModule::t('back', 'Permission groups'), 'url' => ['/user-management/auth-item-group/index']],
-			['label' => '<i class="fa fa-angle-double-right"></i> ' . UserManagementModule::t('back', 'Visit log'), 'url' => ['/user-management/user-visit-log/index']],
+			['label' => UserManagementModule::t('back', 'Users'), 'url' => ['/user-management/user/index']],
+			['label' => UserManagementModule::t('back', 'Roles'), 'url' => ['/user-management/role/index']],
+			['label' => UserManagementModule::t('back', 'Permissions'), 'url' => ['/user-management/permission/index']],
+			['label' => UserManagementModule::t('back', 'Permission groups'), 'url' => ['/user-management/auth-item-group/index']],
+			['label' => UserManagementModule::t('back', 'Visit log'), 'url' => ['/user-management/user-visit-log/index']],
 		];
 	}
 

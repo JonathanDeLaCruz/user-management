@@ -1,1 +1,16 @@
-.um-card{border:1px solid #e2e8f0;border-radius:1rem;box-shadow:0 4px 24px #0f172a06;margin-bottom:1.5rem}.um-card .card-header{background:transparent;border-bottom:1px solid #eef2f6;padding:1.1rem 1.5rem}.um-card .card-body{padding:1.5rem}.um-card .table{vertical-align:middle}.um-card .table th{color:#64748b;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;background:#f8fafc}.um-card .btn{border-radius:.5rem}.um-card .summary{color:#64748b;font-size:.85rem}.grid-view{overflow-x:auto}.grid-view .filters input,.grid-view .filters select{min-width:5rem}.route-label{display:block;padding:.55rem;border-radius:.4rem;font-family:monospace}.route-checkbox{margin-right:.5rem}fieldset legend{font-size:1rem;font-weight:600}.auth-login .card{max-width:32rem;margin:auto}h2.lte-hide-title{font-size:1.65rem;margin-bottom:1.3rem;font-weight:700}label input[type=checkbox],label input[type=radio]{accent-color:#2563eb;margin-right:.4rem}.pagination{gap:.25rem}.badge{font-weight:500}
+.um-card { border-color: var(--bs-border-color, #dee2e6); border-radius: var(--bs-border-radius, .375rem); margin-bottom: 1.5rem; }
+.um-card .card-header { background: var(--bs-tertiary-bg, #f8f9fa); }
+.um-card .card-body { padding: 1.25rem; }
+.um-card .table { vertical-align: middle; }
+.um-card .grid-view { overflow-x: auto; }
+.um-card .filters input, .um-card .filters select { min-width: 5rem; }
+.um-card .summary { color: var(--bs-secondary-color, #6c757d); font-size: .875rem; }
+.um-card .um-action { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; padding: .25rem; }
+.um-card .route-label { display: block; padding: .5rem; font-family: monospace; }
+.um-card .route-checkbox { margin-right: .5rem; }
+.um-card fieldset legend { font-size: 1rem; font-weight: 600; }
+.um-card .pagination { gap: .25rem; }
+h2.lte-hide-title { font-size: 1.75rem; margin-bottom: 1.25rem; }
+.auth-login { max-width: 28rem; margin: 2rem auto; }
+.um-card #routes-list { overflow-x: auto; } .um-card .route-label { white-space: nowrap; }
+.um-card .grid-view > .row { margin-inline: 0; }

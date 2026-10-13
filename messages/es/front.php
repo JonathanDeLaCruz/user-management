@@ -17,11 +17,16 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Reset password' => 'Restablecer contraseña',
+    'Hello {username}, follow this link to reset your password:' => 'Hola {username}, sigue este enlace para restablecer tu contraseña:',
+    'Hello {username}, follow this link to confirm your email:' => 'Hola {username}, sigue este enlace para confirmar tu correo electrónico:',
+    'You have registered on {site}.' => 'Te has registrado en {site}.',
+    'Follow this link to confirm your email and activate your account:' => 'Sigue este enlace para confirmar tu correo electrónico y activar tu cuenta:',
     'Username' => 'Nombre de usuario',
     'Authorization' => 'Autorización',
     'Captcha' => 'Código Captcha',
     'Check your E-mail for further instructions' => 'Verifique su correo electrónico para futura instrucciones',
-    'Check your e-mail {email} for instructions to activate account' => 'Verifique su correo electrónico {mail} para obtener las instrucciones para activar la cuenta',
+    'Check your e-mail {email} for instructions to activate account' => 'Verifique su correo electrónico {email} para obtener las instrucciones para activar la cuenta',
     'Confirm' => 'Confirmar',
     'Confirm E-mail' => 'Confirmar correo electrónico',
     'Continue' => 'Continuar',

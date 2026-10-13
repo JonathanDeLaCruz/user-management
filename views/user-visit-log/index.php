@@ -69,7 +69,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					[
 						'class' => 'webvimark\modules\UserManagement\widgets\ActionColumn',
 						'template'=>'{view}',
-						'contentOptions'=>['style'=>'width:70px; text-align:center;'],
+						'contentOptions'=>['style'=>'width:1%; white-space:nowrap; text-align:center;'],
 					],
 				],
 			]); ?>

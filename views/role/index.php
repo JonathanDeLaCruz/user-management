@@ -73,7 +73,7 @@ $this->params['breadcrumbs'][] = $this->title;
 				['class' => 'yii\grid\CheckboxColumn', 'options'=>['style'=>'width:10px'] ],
 				[
 					'class' => 'webvimark\modules\UserManagement\widgets\ActionColumn',
-					'contentOptions'=>['style'=>'width:70px; text-align:center;'],
+					'contentOptions'=>['style'=>'width:1%; white-space:nowrap; text-align:center;'],
 				],
 			],
 		]); ?>

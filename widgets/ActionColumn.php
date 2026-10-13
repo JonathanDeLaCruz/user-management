@@ -1,11 +1,12 @@
 <?php
 namespace webvimark\modules\UserManagement\widgets;
+
 class ActionColumn extends \yii\grid\ActionColumn
 {
-    public function init()
+    protected function initDefaultButton($name, $iconName, $additionalOptions = [])
     {
-        $this->icons = ['eye-open' => '<span aria-hidden="true">↗</span>', 'pencil' => '<span aria-hidden="true">✎</span>', 'trash' => '<span aria-hidden="true">×</span>'];
-        $this->buttonOptions = ['class' => 'btn btn-sm btn-outline-secondary'];
-        parent::init();
+        $colors = ['view' => 'success', 'update' => 'primary', 'delete' => 'danger'];
+        $additionalOptions['class'] = 'btn btn-sm btn-outline-' . ($colors[$name] ?? 'secondary') . ' um-action';
+        parent::initDefaultButton($name, $iconName, $additionalOptions);
     }
 }

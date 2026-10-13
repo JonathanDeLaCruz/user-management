@@ -17,6 +17,13 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Logout' => 'Salir',
+    'Routes' => 'Rutas',
+    'Username' => 'Nombre de usuario',
+    'Per page' => 'Por página',
+    'Apply' => 'Aplicar',
+    'Selected actions' => 'Acciones seleccionadas',
+    'Apply the action to the selected records?' => '¿Aplicar la acción a los registros seleccionados?',
     'Active' => 'Activo',
     'Are you sure you want to delete this user?' => '¿Está seguro que desea eliminar este usuario?',
     'Banned' => 'Bloqueado',

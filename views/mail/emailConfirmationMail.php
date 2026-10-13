@@ -4,12 +4,13 @@
  * @var $user webvimark\modules\UserManagement\models\User
  */
 use yii\helpers\Html;
+use webvimark\modules\UserManagement\UserManagementModule;
 
 ?>
 <?php
 $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['/user-management/auth/confirm-email-receive', 'token' => $user->confirmationToken]);
 ?>
 
-Hello <?= Html::encode($user->username) ?>, follow this link to confirm your email:
+<?= Html::encode(UserManagementModule::t('front', 'Hello {username}, follow this link to confirm your email:', ['username' => $user->username])) ?>
 
-<?= Html::a('Confirm E-mail', $resetLink) ?>
+<?= Html::a(Html::encode(UserManagementModule::t('front', 'Confirm E-mail')), $resetLink) ?>

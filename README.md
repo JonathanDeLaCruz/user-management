@@ -147,7 +147,10 @@ echo GhostNav::widget([
 Cierre de sesión:
 
 ```php
-echo yii\helpers\Html::a('Salir', ['/user-management/auth/logout'], ['data-method' => 'post']);
+echo yii\helpers\Html::a(
+    webvimark\modules\UserManagement\UserManagementModule::t('back', 'Logout'),
+    ['/user-management/auth/logout'], ['data-method' => 'post']
+);
 ```
 
 ## Opciones

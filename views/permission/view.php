@@ -34,7 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
 </p>
 
 <div class="row">
-	<div class="col-sm-6">
+	<div class="col-lg-6">
 		<div class="card um-card">
 			<div class="card-header">
 				<strong>
@@ -47,7 +47,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 				<div class="row">
 					<?php foreach ($permissionsByGroup as $groupName => $permissions): ?>
-						<div class="col-sm-6">
+						<div class="col-xl-6">
 							<fieldset>
 								<legend><?= Html::encode($groupName) ?></legend>
 
@@ -59,7 +59,7 @@ $this->params['breadcrumbs'][] = $this->title;
 									</label>
 
 									<?= GhostHtml::a(
-										'',
+										Html::encode(Yii::t('yii', 'View')),
 										['view', 'id'=>$permission->name],
 										['target'=>'_blank']
 									) ?>
@@ -86,18 +86,16 @@ $this->params['breadcrumbs'][] = $this->title;
 		</div>
 	</div>
 
-	<div class="col-sm-6">
+	<div class="col-lg-6">
 		<div class="card um-card">
-			<div class="card-header">
-				<strong>
-					Routes
+			<div class="card-header d-flex flex-wrap align-items-center gap-2">
+				<strong><?= Html::encode(UserManagementModule::t('back', 'Routes')) ?></strong>
 
 					<?= Html::a(
 						UserManagementModule::t('back', 'Refresh routes (and delete unused)'),
 						['refresh-routes', 'id'=>$item->name, 'deleteUnused'=>1],
 						[
-							'class' => 'btn btn-outline-secondary btn-sm float-end',
-							'data-method'=>'post', 'style'=>'margin-top:-5px; text-transform:none;',
+							'class' => 'btn btn-outline-danger btn-sm',
 							'data-method'=>'post', 'data-confirm'=>UserManagementModule::t('back', 'Routes that are not exists in this application will be deleted. Do not recommended for application with "advanced" structure, because frontend and backend have they own set of routes.'),
 						]
 					) ?>
@@ -106,38 +104,37 @@ $this->params['breadcrumbs'][] = $this->title;
 						UserManagementModule::t('back', 'Refresh routes'),
 						['refresh-routes', 'id'=>$item->name],
 						[
-							'class' => 'btn btn-outline-secondary btn-sm float-end',
-							'data-method'=>'post', 'style'=>'margin-top:-5px; text-transform:none;',
+							'class' => 'btn btn-outline-secondary btn-sm',
+							'data-method'=>'post',
 						]
 					) ?>
 
 
-				</strong>
 			</div>
 
 			<div class="card-body">
 
 				<?= Html::beginForm(['set-child-routes', 'id'=>$item->name]) ?>
 
-				<div class="row">
-					<div class="col-sm-3">
+				<div class="d-flex flex-wrap gap-2 align-items-center">
+					<div>
 						<?= Html::submitButton(
 							'' . UserManagementModule::t('back', 'Save'),
 							['class'=>'btn btn-primary btn-sm']
 						) ?>
 					</div>
 
-					<div class="col-sm-6">
-						<input id="search-in-routes" autofocus="on" type="text" class="form-control form-control-sm" placeholder="<?= UserManagementModule::t('back', 'Search route'); ?>">
+					<div class="flex-grow-1">
+						<input id="search-in-routes" type="search" class="form-control form-control-sm" aria-label="<?= Html::encode(UserManagementModule::t('back', 'Search route')) ?>" placeholder="<?= Html::encode(UserManagementModule::t('back', 'Search route')) ?>">
 					</div>
 
-					<div class="col-sm-3 text-end">
-						<span id="show-only-selected-routes" class="btn btn-outline-secondary btn-sm">
+					<div>
+						<button type="button" id="show-only-selected-routes" class="btn btn-outline-secondary btn-sm">
 							<?= UserManagementModule::t('back', 'Show only selected'); ?>
-						</span>
-						<span id="show-all-routes" class="btn btn-outline-secondary btn-sm d-none">
+						</button>
+						<button type="button" id="show-all-routes" class="btn btn-outline-secondary btn-sm d-none">
 							<?= UserManagementModule::t('back', 'Show all'); ?>
-						</span>
+						</button>
 
 					</div>
 				</div>
