@@ -2,7 +2,7 @@
 
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\bootstrap5\ActiveForm;
-use yii\captcha\Captcha;
+use webvimark\modules\UserManagement\widgets\Captcha;
 use yii\helpers\Html;
 
 /**
@@ -14,9 +14,9 @@ $this->title = UserManagementModule::t('front', 'Password recovery');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 
-<div class="password-recovery">
+<div class="password-recovery auth-login card um-card"><div class="card-body p-4 p-md-5">
 
-	<h2 class="text-center"><?= Html::encode($this->title) ?></h2>
+	<h1 class="h3 mb-4"><?= Html::encode($this->title) ?></h1>
 
 	<?php if ( Yii::$app->session->hasFlash('error') ): ?>
 		<div class="alert alert-warning text-center">
@@ -26,19 +26,18 @@ $this->params['breadcrumbs'][] = $this->title;
 
 	<?php $form = ActiveForm::begin([
 		'id'=>'user',
-		'layout'=>'horizontal',
+		'layout'=>'default',
 		'validateOnBlur'=>false,
 	]); ?>
 
 	<?= $form->field($model, 'email')->textInput(['maxlength' => 255, 'autofocus'=>true]) ?>
 
 	<?= $form->field($model, 'captcha')->widget(Captcha::className(), [
-		'template' => '<div class="row"><div class="col-sm-2">{image}</div><div class="col-sm-3">{input}</div></div>',
 		'captchaAction'=>['/user-management/auth/captcha']
 	]) ?>
 
 	<div class="mb-3">
-		<div class="offset-sm-3 col-sm-9">
+		<div class="d-grid">
 			<?= Html::submitButton(
 				'' . UserManagementModule::t('front', 'Recover'),
 				['class' => 'btn btn-primary']
@@ -47,5 +46,7 @@ $this->params['breadcrumbs'][] = $this->title;
 	</div>
 
 	<?php ActiveForm::end(); ?>
-
+<div class="mt-4 small">
+<?= Html::a(Html::encode(UserManagementModule::t('front', 'Login')), ['/user-management/auth/login'], ['class'=>'btn btn-secondary btn-sm w-100']) ?>
+</div></div>
 </div>

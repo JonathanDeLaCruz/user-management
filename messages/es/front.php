@@ -17,6 +17,9 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Verification code' => 'Código de verificación',
+    'Enter the code' => 'Escribe el código',
+    'New code' => 'Otro código',
     'Welcome back' => 'Bienvenido de nuevo',
     'Sign in to manage users and permissions.' => 'Accede al panel de gestión de usuarios y permisos.',
     'Reset password' => 'Restablecer contraseña',
