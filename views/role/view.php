@@ -89,18 +89,20 @@ $this->params['breadcrumbs'][] = $this->title;
 								<legend><?= Html::encode($groupName) ?></legend>
 
 								<?php foreach ($permissions as $permission): ?>
+									<div class="um-permission-row">
+									
 									<label>
 										<?php $isChecked = in_array($permission->name, ArrayHelper::map($currentPermissions, 'name', 'name')) ? 'checked' : '' ?>
 										<input type="checkbox" <?= $isChecked ?> name="child_permissions[]" value="<?= Html::encode($permission->name) ?>">
 										<?= Html::encode($permission->description) ?>
 									</label>
-
-									<?= GhostHtml::a(
-										'',
+<?= GhostHtml::a(
+										Html::encode(Yii::t('yii', 'View')),
 										['/user-management/permission/view', 'id'=>$permission->name],
-										['target'=>'_blank']
+										['class'=>'btn btn-success btn-sm', 'target'=>'_blank', 'rel'=>'noopener']
 									) ?>
-									<br/>
+
+									</div>
 								<?php endforeach ?>
 
 							</fieldset>

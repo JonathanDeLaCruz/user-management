@@ -27,7 +27,7 @@ use yii\widgets\ActiveForm;
 
     <div class="mb-3">
         <?= Html::submitButton(UserManagementModule::t('back', 'Search'), ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton(UserManagementModule::t('back', 'Reset'), ['class' => 'btn btn-outline-secondary']) ?>
+        <?= Html::resetButton(UserManagementModule::t('back', 'Reset'), ['class' => 'btn btn-secondary']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

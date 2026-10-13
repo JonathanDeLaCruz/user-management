@@ -52,18 +52,20 @@ $this->params['breadcrumbs'][] = $this->title;
 								<legend><?= Html::encode($groupName) ?></legend>
 
 								<?php foreach ($permissions as $permission): ?>
+									<div class="um-permission-row">
+									
 									<label>
 										<?php $isChecked = in_array($permission->name, ArrayHelper::map($childPermissions, 'name', 'name')) ? 'checked' : '' ?>
 										<input type="checkbox" <?= $isChecked ?> name="child_permissions[]" value="<?= Html::encode($permission->name) ?>">
 										<?= Html::encode($permission->description) ?>
 									</label>
-
-									<?= GhostHtml::a(
+<?= GhostHtml::a(
 										Html::encode(Yii::t('yii', 'View')),
 										['view', 'id'=>$permission->name],
-										['target'=>'_blank']
+										['class'=>'btn btn-success btn-sm', 'target'=>'_blank', 'rel'=>'noopener']
 									) ?>
-									<br/>
+
+									</div>
 								<?php endforeach ?>
 
 							</fieldset>
@@ -95,7 +97,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						UserManagementModule::t('back', 'Refresh routes (and delete unused)'),
 						['refresh-routes', 'id'=>$item->name, 'deleteUnused'=>1],
 						[
-							'class' => 'btn btn-outline-danger btn-sm',
+							'class' => 'btn btn-danger btn-sm',
 							'data-method'=>'post', 'data-confirm'=>UserManagementModule::t('back', 'Routes that are not exists in this application will be deleted. Do not recommended for application with "advanced" structure, because frontend and backend have they own set of routes.'),
 						]
 					) ?>
@@ -104,7 +106,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						UserManagementModule::t('back', 'Refresh routes'),
 						['refresh-routes', 'id'=>$item->name],
 						[
-							'class' => 'btn btn-outline-secondary btn-sm',
+							'class' => 'btn btn-secondary btn-sm',
 							'data-method'=>'post',
 						]
 					) ?>
@@ -129,10 +131,10 @@ $this->params['breadcrumbs'][] = $this->title;
 					</div>
 
 					<div>
-						<button type="button" id="show-only-selected-routes" class="btn btn-outline-secondary btn-sm">
+						<button type="button" id="show-only-selected-routes" class="btn btn-secondary btn-sm">
 							<?= UserManagementModule::t('back', 'Show only selected'); ?>
 						</button>
-						<button type="button" id="show-all-routes" class="btn btn-outline-secondary btn-sm d-none">
+						<button type="button" id="show-all-routes" class="btn btn-secondary btn-sm d-none">
 							<?= UserManagementModule::t('back', 'Show all'); ?>
 						</button>
 

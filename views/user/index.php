@@ -130,7 +130,7 @@ $this->params['breadcrumbs'][] = $this->title;
 								return GhostHtml::a(
 									UserManagementModule::t('back', 'Change password'),
 									['change-password', 'id'=>$model->id],
-									['class'=>'btn btn-sm btn-outline-secondary', 'data-pjax'=>0]);
+									['class'=>'btn btn-sm btn-secondary', 'data-pjax'=>0]);
 							},
 						'format'=>'raw',
 						'options'=>[
