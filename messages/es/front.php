@@ -17,6 +17,8 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Welcome back' => 'Bienvenido de nuevo',
+    'Sign in to manage users and permissions.' => 'Accede al panel de gestión de usuarios y permisos.',
     'Reset password' => 'Restablecer contraseña',
     'Hello {username}, follow this link to reset your password:' => 'Hola {username}, sigue este enlace para restablecer tu contraseña:',
     'Hello {username}, follow this link to confirm your email:' => 'Hola {username}, sigue este enlace para confirmar tu correo electrónico:',

@@ -53,7 +53,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
 								<?php foreach ($permissions as $permission): ?>
 									<div class="um-permission-row">
-									
+
 									<label>
 										<?php $isChecked = in_array($permission->name, ArrayHelper::map($childPermissions, 'name', 'name')) ? 'checked' : '' ?>
 										<input type="checkbox" <?= $isChecked ?> name="child_permissions[]" value="<?= Html::encode($permission->name) ?>">
