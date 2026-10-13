@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
 
 ```bash
-composer require "yii2-access/user-management:^2.0.6"
+composer require "yii2-access/user-management:^2.0.7"
 ```
 
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
