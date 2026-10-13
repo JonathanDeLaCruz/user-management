@@ -4,10 +4,10 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 
 ## Instalación
 
-Mediante Composer, una vez registrado el paquete en Packagist:
+Instala la versión estable desde [Packagist](https://packagist.org/packages/jonathandelacruz/yii2-user-management):
 
 ```bash
-composer require jonathandelacruz/yii2-user-management
+composer require jonathandelacruz/yii2-user-management:^2.0
 ```
 
 Si utilizas `webvimark/module-user-management`, sustituye esa dependencia por este paquete.
