@@ -2,11 +2,8 @@
   "name": "jonathandelacruz/yii2-user-management",
   "description": "Yii2 user management and RBAC with Bootstrap 5 and PHP 8.2-8.5",
   "type": "yii2-extension",
-  "archive": {"exclude": ["/demo", "/tests", "/reports", "/scripts", "/.runtimes", "/.downloads", "/.phpunit.cache"]},
   "autoload": {"psr-4": {"webvimark\\modules\\UserManagement\\": ""}},
   "require": {"php": ">=8.2 <8.6", "yiisoft/yii2": "^2.0.55", "yiisoft/yii2-bootstrap5": "^2.0", "yiisoft/yii2-symfonymailer": "^2.0"},
-  "require-dev": {"phpunit/phpunit": "^11.5", "phpstan/phpstan": "^2.1"},
   "repositories": [{"type": "composer", "url": "https://asset-packagist.org"}],
-  "config": {"allow-plugins": {"yiisoft/yii2-composer": true}, "sort-packages": true},
-  "scripts": {"test": "phpunit", "analyse": "phpstan analyse --memory-limit=512M"}
+  "config": {"allow-plugins": {"yiisoft/yii2-composer": true}, "sort-packages": true}
 }

@@ -2,8 +2,6 @@
 
 namespace webvimark\modules\UserManagement\models;
 
-use webvimark\modules\UserManagement\components\LittleBigHelper;
-use webvimark\modules\UserManagement\components\Singleton;
 use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\components\UserIdentity;
 use webvimark\modules\UserManagement\models\rbacDB\Role;

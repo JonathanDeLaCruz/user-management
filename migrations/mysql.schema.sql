@@ -1,2 +1,0 @@
--- The legacy 2015 SQL dump was retired because it contained obsolete routes and bootstrap credentials.
--- Install and upgrade with the Yii migration command described in README.md.

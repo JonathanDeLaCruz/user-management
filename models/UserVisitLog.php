@@ -3,7 +3,6 @@
 namespace webvimark\modules\UserManagement\models;
 
 
-use webvimark\modules\UserManagement\components\LittleBigHelper;
 use webvimark\modules\UserManagement\UserManagementModule;
 use Yii;
 

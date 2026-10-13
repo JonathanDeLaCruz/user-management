@@ -27,7 +27,7 @@ themes/classic/views/
 
 # composer itself is not needed
 composer.phar
-# The root lock is tracked for reproducible tests.
+composer.lock
 
 # SASS
 .sass-cache
@@ -91,3 +91,16 @@ phpunit.phar
 /reports/local-credentials.txt
 /.env
 /reports-phpstan.json
+
+# Local review tools and example application are not part of the module.
+/demo/
+/docs/
+/reports/
+/scripts/
+/tests/
+/.github/
+/phpstan.neon
+/phpunit.xml.dist
+/Dockerfile
+/compose.yaml
+/.env.example

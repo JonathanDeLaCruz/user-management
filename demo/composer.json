@@ -1,9 +1,0 @@
-{
-  "name": "jonathandelacruz/user-management-demo",
-  "description": "Local Yii2 application for reviewing the Bootstrap 5 module",
-  "type": "project",
-  "require": {"php": ">=8.2 <8.6", "jonathandelacruz/yii2-user-management": "@dev"},
-  "repositories": [{"type":"path","url":"..","options":{"symlink":true}}, {"type":"composer","url":"https://asset-packagist.org"}],
-  "config": {"allow-plugins":{"yiisoft/yii2-composer":true},"sort-packages":true},
-  "autoload": {"psr-4":{"app\\":""}}
-}
