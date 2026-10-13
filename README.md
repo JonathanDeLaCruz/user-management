@@ -4,15 +4,16 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 
 ## Instalación
 
-Instala la versión estable desde [Packagist](https://packagist.org/packages/jonathandelacruz/yii2-user-management):
+Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
 
 ```bash
-composer require jonathandelacruz/yii2-user-management:^2.0
+composer require "yii2-access/user-management:^2.0.6"
 ```
 
-Si utilizas `webvimark/module-user-management`, sustituye esa dependencia por este paquete.
+Si utilizas `webvimark/module-user-management` o `jonathandelacruz/yii2-user-management`, sustituye esa dependencia por este paquete; no instales ambas versiones a la vez.
 
-La [plantilla opcional](https://github.com/JonathanDeLaCruz/user-management/releases/tag/v2.0.4) incluye menú lateral, pantallas de acceso y una gráfica de los accesos registrados durante los últimos 30 días. Descarga el ZIP adjunto y sigue su README; requiere el módulo actualizado y las migraciones aplicadas.
+
+El módulo incluye el diseño completo: menú lateral minimizable, formularios de acceso y un panel con gráfica de actividad. Se muestra automáticamente en sus rutas. El inicio está en `/user-management/dashboard/index`. Se conserva el namespace `webvimark\modules\UserManagement`.
 
 ## Configuración
 

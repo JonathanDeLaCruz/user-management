@@ -8,6 +8,7 @@ use webvimark\modules\UserManagement\assets\ModuleAsset;
 
 class BaseController extends Controller
 {
+    public $layout = '@webvimark/modules/UserManagement/views/layouts/main';
     public $freeAccess = false;
     public $freeAccessActions = [];
     public $enableOnlyActions = [];

@@ -1,0 +1,12 @@
+.um-auth-page { margin: 0; background: #f4f7fb; }
+.um-auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+.um-auth-intro { padding: 64px clamp(32px, 7vw, 110px); background: #102239; color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.um-auth-brand { display: flex; justify-content: center; align-items: center; gap: 12px; font-weight: 600; margin-bottom: 48px; }
+.um-auth-logo { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex-shrink: 0; border-radius: 8px; background: #2563eb; color: #fff; }
+.um-auth-intro h2 { font-size: clamp(2rem, 3.5vw, 3.25rem); line-height: 1.15; letter-spacing: -.035em; margin-bottom: 24px; max-width: 16ch; text-wrap: balance; }
+.um-auth-illustration { color: #91b4e5; width: min(100%, 280px); margin-top: 32px; }
+.um-auth-content { display: flex; align-items: center; justify-content: center; padding: 40px; min-width: 0; }
+.um-auth-content .auth-login { width: 100%; max-width: 30rem; margin: 0; border-color: #e2e8f0; border-radius: 16px; box-shadow: 0 12px 40px #1022390d; }
+.um-auth-content .form-control { padding: .75rem; }
+.um-auth-content .btn-primary { padding-block: .75rem; }
+@media (max-width: 991px) { .um-auth-shell { grid-template-columns: 1fr; } .um-auth-intro { padding: 28px 24px; } .um-auth-brand { margin-bottom: 20px; } .um-auth-intro h2 { font-size: 1.75rem; margin-bottom: 12px; max-width: 26ch; } .um-auth-illustration { display: none; } .um-auth-content { padding: 24px 18px; } }

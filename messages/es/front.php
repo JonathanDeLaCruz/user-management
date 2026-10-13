@@ -17,6 +17,8 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'User management' => 'Gestión de usuarios',
+    'One place to manage every access.' => 'Un lugar para gestionar cada acceso.',
     'Verification code' => 'Código de verificación',
     'Enter the code' => 'Escribe el código',
     'New code' => 'Otro código',

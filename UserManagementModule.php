@@ -7,6 +7,7 @@ use yii\helpers\ArrayHelper;
 
 class UserManagementModule extends \yii\base\Module
 {
+    public $defaultRoute = 'dashboard/index';
 	public static function instance(): self
 	{
 		$module = Yii::$app->getModule('user-management');

@@ -18,6 +18,8 @@ use yii\widgets\ActiveForm;
 
 class AuthController extends BaseController
 {
+	public $layout = '@webvimark/modules/UserManagement/views/layouts/auth';
+
 	/**
 	 * @var array
 	 */
@@ -42,7 +44,7 @@ class AuthController extends BaseController
 	{
 		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
-			return $this->goHome();
+			return $this->redirect(['/user-management/dashboard/index']);
 		}
 
 		$model = new LoginForm();
@@ -55,7 +57,10 @@ class AuthController extends BaseController
 
 		if ( $model->load(Yii::$app->request->post()) AND $model->login() )
 		{
-			return $this->goBack();
+			if (User::component()->getReturnUrl() === Yii::$app->homeUrl) {
+				return $this->redirect(['/user-management/dashboard/index']);
+			}
+			return $this->goBack(['/user-management/dashboard/index']);
 		}
 
 		return $this->renderIsAjax('login', compact('model'));
