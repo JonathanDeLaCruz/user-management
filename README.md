@@ -10,7 +10,14 @@ Instala la versión estable desde [Packagist](https://packagist.org/packages/yii
 composer require "yii2-access/user-management:^2.0.6"
 ```
 
-Si utilizas `webvimark/module-user-management` o `jonathandelacruz/yii2-user-management`, sustituye esa dependencia por este paquete; no instales ambas versiones a la vez.
+Si utilizas `jonathandelacruz/yii2-user-management`, reemplázalo así:
+
+```bash
+composer remove jonathandelacruz/yii2-user-management --no-update
+composer require "yii2-access/user-management:^2.0.6" --with-all-dependencies
+```
+
+Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
 
 
 El módulo incluye el diseño completo: menú lateral minimizable, formularios de acceso y un panel con gráfica de actividad. Se muestra automáticamente en sus rutas. El inicio está en `/user-management/dashboard/index`. Se conserva el namespace `webvimark\modules\UserManagement`.
