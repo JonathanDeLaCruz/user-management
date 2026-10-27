@@ -1,6 +1,6 @@
 <?php
 
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m141116_115804_add_bind_to_ip_and_registration_ip_to_user extends Migration
 {

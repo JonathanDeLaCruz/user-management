@@ -1,7 +1,7 @@
 <?php
 
 use yii\db\Schema;
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m140608_173539_create_user_table extends Migration
 {

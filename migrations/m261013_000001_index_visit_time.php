@@ -1,5 +1,5 @@
 <?php
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m261013_000001_index_visit_time extends Migration
 {

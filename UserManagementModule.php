@@ -182,13 +182,13 @@ class UserManagementModule extends \yii\base\Module
 	 *
 	 * @var string
 	 */
-	public $user_table = '{{%user}}';
-	public $user_visit_log_table = '{{%user_visit_log}}';
-	public $auth_item_table = '{{%auth_item}}';
-	public $auth_item_child_table = '{{%auth_item_child}}';
-	public $auth_item_group_table = '{{%auth_item_group}}';
-	public $auth_assignment_table = '{{%auth_assignment}}';
-	public $auth_rule_table = '{{%auth_rule}}';
+	public $user_table = '{{%um_user}}';
+	public $user_visit_log_table = '{{%um_user_visit_log}}';
+	public $auth_item_table = '{{%um_auth_item}}';
+	public $auth_item_child_table = '{{%um_auth_item_child}}';
+	public $auth_item_group_table = '{{%um_auth_item_group}}';
+	public $auth_assignment_table = '{{%um_auth_assignment}}';
+	public $auth_rule_table = '{{%um_auth_rule}}';
 
 	public $controllerNamespace = 'webvimark\modules\UserManagement\controllers';
 
@@ -198,6 +198,19 @@ class UserManagementModule extends \yii\base\Module
 	public function init()
 	{
 		parent::init();
+
+		$manager = Yii::$app->get('authManager', false);
+		if ($manager instanceof \yii\rbac\DbManager) {
+			$changed = $manager->itemTable !== $this->auth_item_table
+				|| $manager->itemChildTable !== $this->auth_item_child_table
+				|| $manager->assignmentTable !== $this->auth_assignment_table
+				|| $manager->ruleTable !== $this->auth_rule_table;
+			$manager->itemTable = $this->auth_item_table;
+			$manager->itemChildTable = $this->auth_item_child_table;
+			$manager->assignmentTable = $this->auth_assignment_table;
+			$manager->ruleTable = $this->auth_rule_table;
+			if ($changed) $manager->invalidateCache();
+		}
 
 		$this->prepareMailerOptions();
 	}

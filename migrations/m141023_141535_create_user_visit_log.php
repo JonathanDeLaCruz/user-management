@@ -1,6 +1,6 @@
 <?php
 
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m141023_141535_create_user_visit_log extends Migration
 {

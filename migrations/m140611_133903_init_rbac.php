@@ -2,7 +2,7 @@
 
 use yii\db\Schema;
 
-class m140611_133903_init_rbac extends \yii\db\Migration
+class m140611_133903_init_rbac extends \webvimark\modules\UserManagement\components\Migration
 {
 
 	public function up()

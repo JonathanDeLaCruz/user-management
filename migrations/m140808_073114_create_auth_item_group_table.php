@@ -1,6 +1,6 @@
 <?php
 
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m140808_073114_create_auth_item_group_table extends Migration
 {
@@ -27,9 +27,9 @@ class m140808_073114_create_auth_item_group_table extends Migration
 
 			], $tableOptions);
 
-			$this->addColumn(Yii::$app->getModule('user-management')->auth_item_table, 'group_code', 'varchar(64)');
-			if ($this->db->driverName !== 'sqlite') $this->addForeignKey('fk_auth_item_group_code', Yii::$app->getModule('user-management')->auth_item_table, 'group_code', Yii::$app->getModule('user-management')->auth_item_group_table, 'code', 'SET NULL', 'CASCADE');
 	        }
+		$this->addColumn(Yii::$app->getModule('user-management')->auth_item_table, 'group_code', 'varchar(64)');
+		if ($this->db->driverName !== 'sqlite') $this->addForeignKey('fk_auth_item_group_code', Yii::$app->getModule('user-management')->auth_item_table, 'group_code', Yii::$app->getModule('user-management')->auth_item_group_table, 'code', 'SET NULL', 'CASCADE');
 
 		if (Yii::$app->cache) {
 			Yii::$app->cache->flush();

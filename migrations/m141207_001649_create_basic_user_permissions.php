@@ -4,7 +4,7 @@ use webvimark\modules\UserManagement\models\rbacDB\AuthItemGroup;
 use webvimark\modules\UserManagement\models\rbacDB\Permission;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m141207_001649_create_basic_user_permissions extends Migration
 {
@@ -15,10 +15,12 @@ class m141207_001649_create_basic_user_permissions extends Migration
 		Role::create('Admin');
 
 		// ================= User management permissions =================
-		$group = new AuthItemGroup();
+		$group = AuthItemGroup::findOne(['code' => 'userManagement']) ?? new AuthItemGroup();
+		if ($group->isNewRecord) {
 		$group->name = 'User management';
 		$group->code = 'userManagement';
 		$group->save(false);
+		}
 
 
 		Role::assignRoutesViaPermission('Admin','viewUsers', [
@@ -71,10 +73,12 @@ class m141207_001649_create_basic_user_permissions extends Migration
 
 
 		// ================= User common permissions =================
-		$group = new AuthItemGroup();
+		$group = AuthItemGroup::findOne(['code' => 'userCommonPermissions']) ?? new AuthItemGroup();
+		if ($group->isNewRecord) {
 		$group->name = 'User common permission';
 		$group->code = 'userCommonPermissions';
 		$group->save(false);
+		}
 
 		Role::assignRoutesViaPermission('Admin','changeOwnPassword', ['/user-management/auth/change-own-password'], 'Change own password', $group->code);
 	}

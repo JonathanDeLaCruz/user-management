@@ -1,6 +1,6 @@
 <?php
 
-use yii\db\Migration;
+use webvimark\modules\UserManagement\components\Migration;
 
 class m141201_220516_add_email_and_email_confirmed_to_user extends Migration
 {

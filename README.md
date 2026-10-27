@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
 
 ```bash
-composer require "yii2-access/user-management:^2.0.7"
+composer require "yii2-access/user-management:^2.1.0"
 ```
 
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
@@ -95,6 +95,22 @@ Añade a `config/console.php`, utilizando la misma base de datos que en la confi
 
 ```bash
 php yii migrate --migrationPath=@webvimark/modules/UserManagement/migrations
+```
+
+Las tablas del módulo usan el prefijo `um_`: `um_user`, `um_user_visit_log`, `um_auth_item`, `um_auth_item_child`, `um_auth_item_group`, `um_auth_assignment`, `um_auth_rule`, `um_state` y `um_attempt`. Si tu conexión define `tablePrefix`, se conserva delante (por ejemplo, `app_um_user`). La tabla de historial de migraciones de Yii no cambia.
+
+Para actualizar una instalación existente, respalda la base de datos, actualiza el paquete y ejecuta el mismo comando de migraciones. Se renombran las tablas antiguas conservando los datos; las que ya tienen el nombre nuevo se reutilizan y solo se añaden columnas o índices pendientes. No borres el historial de migraciones. Si coexisten los nombres antiguo y nuevo para una tabla, la migración se detiene para que resuelvas la duplicidad sin sobrescribir datos.
+
+El módulo configura `DbManager` para utilizar sus tablas RBAC. Si utilizas `authManager` antes de cargar el módulo (por ejemplo, desde un proceso de consola independiente), declara también estos nombres en su configuración:
+
+```php
+'authManager' => [
+    'class' => yii\rbac\DbManager::class,
+    'itemTable' => '{{%um_auth_item}}',
+    'itemChildTable' => '{{%um_auth_item_child}}',
+    'assignmentTable' => '{{%um_auth_assignment}}',
+    'ruleTable' => '{{%um_auth_rule}}',
+],
 ```
 
 ### 4. Crear el superadministrador
