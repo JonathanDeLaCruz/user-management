@@ -31,8 +31,24 @@ class BaseController extends Controller
             throw new \yii\web\NotFoundHttpException();
         }
         if (!parent::beforeAction($action)) return false;
+        $sensitive = $this->id !== 'security' && ($this->id !== 'auth' || in_array($action->id, ['change-own-password', 'confirm-email'], true));
+        if (Yii::$app->request->isPost && $sensitive
+            && !Yii::$app->user->isGuest && !AccountSecurity::recent(Yii::$app->user->identity)) {
+            Yii::$app->session->setFlash('warning', \webvimark\modules\UserManagement\UserManagementModule::t('front', 'Verify your identity before making changes.'));
+            Yii::$app->response->redirect(['/user-management/security/index']);
+            return false;
+        }
         ModuleAsset::register($this->view);
         return true;
+    }
+
+    public function afterAction($action, $result)
+    {
+        $result = parent::afterAction($action, $result);
+        if (Yii::$app->request->isPost && !Yii::$app->user->isGuest && $this->id !== 'security' && $this->id !== 'auth') {
+            Audit::record('action.completed', '/' . $action->uniqueId, ['id' => mb_substr((string)Yii::$app->request->get('id', ''), 0, 100)]);
+        }
+        return $result;
     }
 
     public function renderIsAjax($view, $params = [])

@@ -89,7 +89,12 @@ class ChangeOwnPasswordForm extends Model
 			if (!$expectedToken) return false;
 			$this->user->setPassword($this->password);
 			$this->user->generateAuthKey();
-			return User::updateAll(['password_hash'=>$this->user->password_hash, 'auth_key'=>$this->user->auth_key, 'confirmation_token'=>null, 'updated_at'=>time()], ['id'=>$this->user->id, 'confirmation_token'=>$expectedToken]) === 1;
+            $changed = User::updateAll(['password_hash'=>$this->user->password_hash, 'auth_key'=>$this->user->auth_key, 'confirmation_token'=>null, 'updated_at'=>time()], ['id'=>$this->user->id, 'confirmation_token'=>$expectedToken]) === 1;
+            if ($changed) {
+                \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->user->id);
+                \webvimark\modules\UserManagement\components\AccountSecurity::notify($this->user, 'Password changed');
+            }
+            return $changed;
 		}
 		$this->user->password = $this->password;
 		$this->user->removeConfirmationToken();

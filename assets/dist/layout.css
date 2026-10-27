@@ -11,6 +11,9 @@
 .sidebar-link:hover, .sidebar-link.active { color: #fff; background: #203954; }
 .app-workspace { margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; transition: margin-left .2s; }
 .app-topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 32px; border-bottom: 1px solid #dee2e6; background: #fff; }
+.um-user-menu { min-width: 0; }
+.um-user-menu .btn { white-space: nowrap; }
+@media (max-width: 575px) { .um-user-menu { width: 100%; } .um-user-menu > span { flex-basis: 100%; } }
 .app-content { padding: 28px 32px; flex: 1; min-width: 0; }
 .app-footer { padding: 16px 32px; color: #6c757d; font-size: .875rem; }
 .sidebar-collapsed { --sidebar-width: 78px; }

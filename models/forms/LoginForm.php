@@ -11,6 +11,7 @@ class LoginForm extends Model
 	public $username;
 	public $password;
 	public $rememberMe = false;
+    public $requiresMfa = false;
 
 	private $_user = false;
 
@@ -88,10 +89,16 @@ class LoginForm extends Model
 	{
 		if ( $this->validate() )
 		{
+            if (\webvimark\modules\UserManagement\components\AccountSecurity::requiresMfa($this->getUser())) {
+                \webvimark\modules\UserManagement\components\AccountSecurity::begin($this->getUser());
+                $this->requiresMfa = true;
+                return false;
+            }
 			return \webvimark\modules\UserManagement\models\User::component()->login($this->getUser(), $this->rememberMe ? \webvimark\modules\UserManagement\models\User::component()->cookieLifetime : 0);
 		}
 		else
 		{
+            \webvimark\modules\UserManagement\components\Audit::record('login.failed', null);
 			return false;
 		}
 	}

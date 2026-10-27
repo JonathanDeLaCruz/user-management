@@ -8,6 +8,15 @@ use yii\helpers\ArrayHelper;
 class UserManagementModule extends \yii\base\Module
 {
     public $defaultRoute = 'dashboard/index';
+    /** optional, admins or all. Existing enrolled accounts always require MFA. */
+    public $mfaPolicy = 'admins';
+    public $mfaRequiredRoles = ['Admin'];
+    public $requirePhishingResistant = true;
+    /** Exact HTTPS origin, including port when nonstandard. Never derived from the Host header. */
+    public $webauthnOrigin;
+    public $mfaEncryptionKey;
+    public $sessionLifetime = 86400;
+    public $sessionIdleTimeout = 1800;
 	public static function instance(): self
 	{
 		$module = Yii::$app->getModule('user-management');
@@ -198,6 +207,11 @@ class UserManagementModule extends \yii\base\Module
 	public function init()
 	{
 		parent::init();
+        components\RuntimeRequirements::assertSupported();
+        if (!in_array($this->mfaPolicy, ['optional', 'admins', 'all'], true)
+            || $this->sessionLifetime < 300 || $this->sessionIdleTimeout < 60) {
+            throw new \yii\base\InvalidConfigException('Invalid account security policy or session timeouts.');
+        }
 
 		$manager = Yii::$app->get('authManager', false);
 		if ($manager instanceof \yii\rbac\DbManager) {
@@ -213,6 +227,15 @@ class UserManagementModule extends \yii\base\Module
 		}
 
 		$this->prepareMailerOptions();
+
+        foreach ([\webvimark\modules\UserManagement\models\User::class,
+            \webvimark\modules\UserManagement\models\rbacDB\AbstractItem::class,
+            \webvimark\modules\UserManagement\models\rbacDB\AuthItemGroup::class] as $class) {
+            foreach ([\yii\db\ActiveRecord::EVENT_AFTER_INSERT, \yii\db\ActiveRecord::EVENT_AFTER_UPDATE, \yii\db\ActiveRecord::EVENT_AFTER_DELETE] as $event) {
+                \yii\base\Event::off($class, $event, [components\Audit::class, 'modelChanged']);
+                \yii\base\Event::on($class, $event, [components\Audit::class, 'modelChanged']);
+            }
+        }
 	}
 
 	/**

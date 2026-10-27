@@ -2,3 +2,6 @@
 *.bat text eol=crlf
 *.jpg binary
 *.png binary
+/tests export-ignore
+/.github export-ignore
+/phpunit.xml.dist export-ignore

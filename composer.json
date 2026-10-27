@@ -2,8 +2,32 @@
   "name": "yii2-access/user-management",
   "description": "Yii2 user management and RBAC with Bootstrap 5 and PHP 8.2-8.5",
   "type": "yii2-extension",
-  "autoload": {"psr-4": {"webvimark\\modules\\UserManagement\\": ""}},
-  "replace": {"jonathandelacruz/yii2-user-management": "self.version"},
-  "require": {"php": ">=8.2 <8.6", "yiisoft/yii2": "^2.0.55", "yiisoft/yii2-bootstrap5": "^2.0", "yiisoft/yii2-symfonymailer": "^2.0"},
-  "config": {"allow-plugins": {"yiisoft/yii2-composer": true}, "sort-packages": true}
+  "autoload": {
+    "psr-4": {
+      "webvimark\\modules\\UserManagement\\": ""
+    }
+  },
+  "replace": {
+    "jonathandelacruz/yii2-user-management": "self.version"
+  },
+  "require": {
+    "php": ">=8.2.35 <8.3 || >=8.3.36 <8.4 || >=8.4.27 <8.5 || >=8.5.12 <8.6",
+    "yiisoft/yii2": "^2.0.55",
+    "yiisoft/yii2-bootstrap5": "^2.0",
+    "yiisoft/yii2-symfonymailer": "^2.0",
+    "web-auth/webauthn-lib": "^5.3",
+    "spomky-labs/otphp": "^11.3",
+    "ext-openssl": "*",
+    "bacon/bacon-qr-code": "^3.0",
+    "ext-xmlwriter": "*"
+  },
+  "config": {
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    },
+    "sort-packages": true
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.5"
+  }
 }

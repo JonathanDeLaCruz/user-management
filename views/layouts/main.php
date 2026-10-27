@@ -36,8 +36,9 @@ foreach ($items as $index => $item) {
 <div class="app-workspace">
 <header class="app-topbar"><h1 class="app-page-title"><?= Html::encode($this->title ?: UM::t('back', 'Access management')) ?></h1>
 <?php if (!Yii::$app->user->isGuest): ?>
-<?= Html::beginForm(['/user-management/auth/logout'], 'post', ['class' => 'd-flex align-items-center gap-3']) ?>
+<?= Html::beginForm(['/user-management/auth/logout'], 'post', ['class' => 'um-user-menu d-flex flex-wrap align-items-center gap-2']) ?>
 <span class="text-body-secondary"><?= Html::encode(Yii::$app->user->username) ?></span>
+<?= Html::a(Html::encode(UM::t('front', 'Account security')), ['/user-management/security/index'], ['class' => 'btn btn-primary btn-sm']) ?>
 <?= Html::submitButton(Html::encode(UM::t('back', 'Logout')), ['class' => 'btn btn-secondary btn-sm']) ?>
 <?= Html::endForm() ?>
 <?php endif ?>

@@ -63,6 +63,7 @@ class AuthController extends BaseController
 			return $this->goBack(['/user-management/dashboard/index']);
 		}
 
+        if ($model->requiresMfa) return $this->redirect(['/user-management/security/challenge']);
 		return $this->renderIsAjax('login', compact('model'));
 	}
 

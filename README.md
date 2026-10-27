@@ -1,13 +1,13 @@
 # Gestión de usuarios para Yii 2
 
-Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña e historial de accesos. PHP 8.2–8.5, Yii 2.0.55+ y Bootstrap 5.
+Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña, passkeys, MFA, sesiones y auditoría. PHP 8.2–8.5 actualizado, Yii 2.0.55+ y Bootstrap 5.
 
 ## Instalación
 
 Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
 
 ```bash
-composer require "yii2-access/user-management:^2.1.1"
+composer require "yii2-access/user-management:^3.0.0"
 ```
 
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
@@ -25,6 +25,8 @@ Añade estas entradas a `config/web.php`, conservando la conexión `db` y los de
 'modules' => [
     'user-management' => [
         'class' => webvimark\modules\UserManagement\UserManagementModule::class,
+        'webauthnOrigin' => getenv('UM_WEBAUTHN_ORIGIN'),
+        'mfaEncryptionKey' => getenv('UM_MFA_ENCRYPTION_KEY'),
         // 'enableRegistration' => true,
         // 'useEmailAsLogin' => true,
         // 'emailConfirmationRequired' => true,
@@ -117,6 +119,16 @@ El módulo configura `DbManager` para utilizar sus tablas RBAC. Si utilizas `aut
 
 ### 4. Crear el superadministrador
 
+Antes del primer acceso, configura `UM_WEBAUTHN_ORIGIN` con el origen HTTPS exacto de tu aplicación, por ejemplo `https://acceso.example.com` (sin rutas). Para desarrollo se admite `http://localhost:8081`. Incluye el puerto si no es el predeterminado. No se obtiene el dominio del encabezado `Host` y no se aceptan subdominios diferentes.
+
+Genera una clave para cifrar los secretos de las apps autenticadoras:
+
+```bash
+php -r "echo base64_encode(random_bytes(32)), PHP_EOL;"
+```
+
+Guárdala como `UM_MFA_ENCRYPTION_KEY` en las variables de entorno del servidor web y la consola. Conserva la misma clave entre despliegues y respáldala fuera del repositorio. No la generes en cada petición ni la guardes en `vendor`. Las passkeys almacenan claves públicas; no requieren esta clave de cifrado.
+
 ```bash
 php yii um-user/create-admin superadmin
 ```
@@ -156,6 +168,64 @@ Los controladores del módulo ya incluyen este filtro en `components/BaseControl
 2. Abre **Permisos**, actualiza las rutas y vincúlalas a permisos.
 3. Añade los permisos a un rol en **Roles**.
 4. Asigna los roles a las cuentas en **Usuarios**.
+
+## Seguridad de la cuenta
+
+La política predeterminada exige MFA a superadministradores y cuentas con el rol `Admin`, incluyendo roles que lo heredan. Después de verificar la contraseña, esas cuentas deben registrar o usar una passkey. La sesión completa no se crea antes de esa verificación. El dominio, el desafío de un solo uso, la firma, la pertenencia de la credencial y el PIN o biometría del dispositivo se validan en el servidor.
+
+En **Seguridad de la cuenta** (`/user-management/security/index`) puedes registrar una passkey de respaldo, eliminar factores, revisar sesiones activas y cerrarlas. Los cambios sensibles requieren una verificación reciente; la política obligatoria impide eliminar la última passkey. Las sesiones caducan por inactividad o por duración máxima y se revocan al cambiar la contraseña. Las cookies persistentes de «Recordarme» no restauran sesiones.
+
+Opciones dentro de `modules['user-management']` (usa la misma política en web y consola):
+
+```php
+'mfaPolicy' => 'admins', // 'optional', 'admins' o 'all'
+'mfaRequiredRoles' => ['Admin'], // Tus roles administrativos; superadmin siempre se incluye con 'admins'.
+'requirePhishingResistant' => true,
+'sessionLifetime' => 86400,
+'sessionIdleTimeout' => 1800,
+```
+
+Con `requirePhishingResistant => true`, las cuentas obligadas por la política y las que registren una passkey no pueden sustituirla con códigos TOTP, SMS, correo ni recuperación. Registra una segunda passkey en otro dispositivo. El resto puede activar una app autenticadora mediante un QR generado localmente; sus secretos se guardan cifrados y los códigos aceptados no se pueden reutilizar. Los códigos TOTP son MFA, pero no son resistentes al phishing.
+
+Las cuentas que no requieren passkey pueden generar diez códigos de recuperación de un solo uso. Se muestran una vez y se guardan sus hashes. La recuperación exige primero la contraseña y solo permite registrar un factor nuevo; no concede acceso al panel directamente. Al completarla se revocan las sesiones anteriores. Recuperar la contraseña por correo no elimina MFA.
+
+Si una cuenta con política estricta pierde todas sus passkeys, un operador con acceso a la consola debe verificar la identidad de su propietario por un canal independiente antes de ejecutar:
+
+```bash
+php yii user-management/security/reset-mfa nombreUsuario --confirmRecovery=1
+```
+
+El comando revoca factores, sesiones y enlaces pendientes, registra la intervención y exige volver a inscribir una passkey al siguiente acceso si la política lo requiere. No se ofrece una ruta web para saltarse la política estricta.
+
+Para comprobar la configuración del despliegue:
+
+```bash
+php yii user-management/security/check
+```
+
+Los cambios de contraseña y factores generan avisos al correo confirmado del usuario cuando el remitente y SMTP están configurados. Con `useFileTransport => true` esos avisos se guardan en archivos.
+
+Los superadministradores pueden consultar **Auditoría de seguridad** en `/user-management/security/audit`. Registra cambios de cuentas, roles y permisos, verificaciones y revocaciones. No guarda contraseñas, secretos TOTP, códigos de recuperación, claves privadas ni cuerpos de peticiones. Para aplicar una retención de 90 días:
+
+```bash
+php yii user-management/security/cleanup 90
+```
+
+Las nuevas tablas son `um_mfa`, `um_passkey`, `um_recovery_code`, `um_session` y `um_audit_log`; respetan `tablePrefix`. Aplica las migraciones antes de atender peticiones con esta versión. En una actualización, configura el origen y la clave antes de que los administradores inicien sesión.
+
+## PHP y comprobaciones
+
+Se requieren como mínimo PHP **8.2.35, 8.3.36, 8.4.27 o 8.5.12**, que contienen las correcciones críticas de octubre de 2026. En Windows utiliza los builds **`-1` o posteriores**, que incorporan también la corrección de Brotli. Actualiza tanto PHP de consola como el del servidor web; Composer comprueba la versión del PHP que lo ejecuta. [Avisos oficiales de PHP](https://www.php.net/archive/2026.php).
+
+Las pruebas usan credenciales ficticias para verificar firmas WebAuthn, rechazo de orígenes falsos, desafíos y códigos reutilizados, política MFA, sesiones y migraciones. GitHub Actions las ejecuta en PHP 8.2–8.5 y comprueba instalaciones y actualizaciones en MariaDB. `tests/` y `.github/` están excluidos de la distribución Composer.
+
+Para ejecutar las pruebas desde una copia Git del repositorio:
+
+```bash
+composer config repositories.asset-packagist composer https://asset-packagist.org
+composer install
+vendor/bin/phpunit --configuration phpunit.xml.dist
+```
 
 ## Menú
 

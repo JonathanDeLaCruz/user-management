@@ -97,10 +97,9 @@ phpunit.phar
 /docs/
 /reports/
 /scripts/
-/tests/
-/.github/
+/tests/fixtures/app/runtime/
+/tests/fixtures/app/web/assets/
 /phpstan.neon
-/phpunit.xml.dist
 /Dockerfile
 /compose.yaml
 /.env.example

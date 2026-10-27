@@ -30,7 +30,6 @@ $toggle = Html::button(
 <?= $form->field($model, 'password', [
     'template' => '{label}<div class="input-group">{input}' . $toggle . '</div>{error}{hint}',
 ])->passwordInput(['autocomplete' => 'current-password']) ?>
-<?= $form->field($model,'rememberMe')->checkbox() ?>
 <?= Html::submitButton(UserManagementModule::t('front', 'Login'),['class'=>'btn btn-primary w-100 mt-2']) ?>
 <?php ActiveForm::end(); ?>
 <div class="auth-links d-flex flex-wrap gap-2 mt-4"><?= GhostHtml::a(Html::encode(UserManagementModule::t('front', 'Registration')),['/user-management/auth/registration'], ['class'=>'btn btn-secondary btn-sm flex-grow-1']) ?><?= GhostHtml::a(Html::encode(UserManagementModule::t('front', 'Password recovery')),['/user-management/auth/password-recovery'], ['class'=>'btn btn-secondary btn-sm flex-grow-1']) ?></div></div></div>

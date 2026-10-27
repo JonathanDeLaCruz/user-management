@@ -102,6 +102,7 @@ class AuthHelper
 	 */
 	public static function invalidatePermissions()
 	{
+        Audit::record('permissions.changed');
 		Yii::$app->db->createCommand()->update('{{%um_state}}', ['value' => Yii::$app->security->generateRandomString()], ['name' => 'permissions'])->execute();
 		if (Yii::$app->authManager instanceof DbManager) Yii::$app->authManager->invalidateCache();
 		if (Yii::$app->has('cache')) Yii::$app->cache->delete('__commonRoutes');

@@ -29,6 +29,22 @@ use yii\behaviors\TimestampBehavior;
  */
 class User extends UserIdentity
 {
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+        if (!$insert && array_key_exists('password_hash', $changedAttributes)) {
+            \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id);
+            \webvimark\modules\UserManagement\components\AccountSecurity::notify($this, 'Password changed');
+        }
+    }
+
+    public function afterDelete()
+    {
+        parent::afterDelete();
+        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session'] as $table) {
+            if (Yii::$app->db->getTableSchema('{{%' . $table . '}}')) Yii::$app->db->createCommand()->delete('{{%' . $table . '}}', ['user_id' => $this->id])->execute();
+        }
+    }
 	public static function component(): \webvimark\modules\UserManagement\components\UserConfig
 	{
 		$component = Yii::$app->user;
