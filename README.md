@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
 
 ```bash
-composer require "yii2-access/user-management:^2.1.0"
+composer require "yii2-access/user-management:^2.1.1"
 ```
 
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
@@ -96,6 +96,8 @@ Añade a `config/console.php`, utilizando la misma base de datos que en la confi
 ```bash
 php yii migrate --migrationPath=@webvimark/modules/UserManagement/migrations
 ```
+
+Las migraciones cargan el módulo con su configuración predeterminada si no está declarado en consola. Para usar nombres de tablas personalizados, declara el módulo también en `config/console.php` con esos mismos nombres. La configuración web no se carga automáticamente al ejecutar `php yii`.
 
 Las tablas del módulo usan el prefijo `um_`: `um_user`, `um_user_visit_log`, `um_auth_item`, `um_auth_item_child`, `um_auth_item_group`, `um_auth_assignment`, `um_auth_rule`, `um_state` y `um_attempt`. Si tu conexión define `tablePrefix`, se conserva delante (por ejemplo, `app_um_user`). La tabla de historial de migraciones de Yii no cambia.
 

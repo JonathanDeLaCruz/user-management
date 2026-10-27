@@ -285,7 +285,7 @@ class UserManagementModule extends \yii\base\Module
 	 */
 	protected function prepareMailerOptions()
 	{
-		if ( !isset($this->mailerOptions['from']) )
+		if ( !isset($this->mailerOptions['from']) && !empty(Yii::$app->params['adminEmail']) )
 		{
 			$this->mailerOptions['from'] = [Yii::$app->params['adminEmail'] => Yii::$app->name . ' robot'];
 		}

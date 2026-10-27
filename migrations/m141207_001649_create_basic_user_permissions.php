@@ -10,7 +10,7 @@ class m141207_001649_create_basic_user_permissions extends Migration
 {
 	public function safeUp()
 	{
-		Route::refreshRoutes();
+		Route::refreshRoutes(false);
 
 		Role::create('Admin');
 

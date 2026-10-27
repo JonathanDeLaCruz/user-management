@@ -4,6 +4,25 @@ namespace webvimark\modules\UserManagement\components;
 /** Additive schema operations for fresh and partially installed databases. */
 class Migration extends \yii\db\Migration
 {
+    public function init()
+    {
+        parent::init();
+        $app = \Yii::$app;
+        if ($app instanceof \yii\console\Application) {
+            if (!$app->has('authManager')) {
+                $app->set('authManager', ['class' => \yii\rbac\DbManager::class]);
+            }
+            if (!$app->hasModule('user-management')) {
+                $app->setModule('user-management', [
+                    'class' => \webvimark\modules\UserManagement\UserManagementModule::class,
+                    'controllerNamespace' => 'webvimark\\modules\\UserManagement\\commands',
+                ]);
+            }
+        }
+        // Load once before any migration reads the table names or seeds RBAC.
+        \webvimark\modules\UserManagement\UserManagementModule::instance();
+    }
+
     public function createTable($table, $columns, $options = null)
     {
         if ($this->db->getTableSchema($table, true) === null) {
