@@ -4,6 +4,7 @@ use webvimark\modules\UserManagement\components\{AccountSecurity as Security, Pa
 use webvimark\modules\UserManagement\models\User;
 use webvimark\modules\UserManagement\models\forms\LoginForm;
 use yii\db\Query;
+use webvimark\modules\UserManagement\UserManagementModule as UM;
 
 class AccountSecurityTest extends TestCase
 {
@@ -19,7 +20,7 @@ class AccountSecurityTest extends TestCase
         $this->tx = Yii::$app->db->beginTransaction();
         Yii::$app->user->setIdentity(null); Yii::$app->session->removeAll();
         $this->module = Yii::$app->getModule('user-management');
-        $this->settings = [$this->module->mfaPolicy, $this->module->webauthnOrigin, $this->module->mfaEncryptionKey, $this->module->maxAttempts];
+        $this->settings = [$this->module->mfaPolicy, $this->module->webauthnOrigin, $this->module->mfaEncryptionKey, $this->module->maxAttempts, $this->module->requirePhishingResistant];
         $this->module->mfaPolicy = 'optional'; $this->module->webauthnOrigin = 'https://example.test';
         $this->module->mfaEncryptionKey = base64_encode(random_bytes(32)); $this->module->maxAttempts = 100;
         $this->user = new User(['scenario' => 'newUser', 'username' => 'security-test', 'password' => 'A security test phrase', 'repeat_password' => 'A security test phrase']);
@@ -30,7 +31,7 @@ class AccountSecurityTest extends TestCase
 
     protected function tearDown(): void
     {
-        [$this->module->mfaPolicy, $this->module->webauthnOrigin, $this->module->mfaEncryptionKey, $this->module->maxAttempts] = $this->settings;
+        [$this->module->mfaPolicy, $this->module->webauthnOrigin, $this->module->mfaEncryptionKey, $this->module->maxAttempts, $this->module->requirePhishingResistant] = $this->settings;
         Yii::$app->user->setIdentity(null); Yii::$app->user->enableSession = false; Yii::$app->session->removeAll();
         $this->tx->rollBack();
     }
@@ -112,8 +113,39 @@ class AccountSecurityTest extends TestCase
         $this->reject(fn() => Passkeys::verify($this->user, 'login', $data));
     }
 
+    public function testDefaultAdminPolicyOffersAuthenticatorEnrollmentBeforeAccess(): void
+    {
+        $defaults = (new ReflectionClass(UM::class))->getDefaultProperties();
+        self::assertFalse($defaults['requirePhishingResistant']);
+        self::assertSame('admins', $defaults['mfaPolicy']);
+        $this->module->mfaPolicy = 'admins';
+        $this->module->requirePhishingResistant = false;
+        $this->user->superadmin = 1;
+        $this->user->save(false);
+        $form = new LoginForm(['username' => $this->user->username, 'password' => 'A security test phrase']);
+        self::assertFalse($form->login());
+        self::assertTrue($form->requiresMfa);
+        self::assertTrue(Yii::$app->user->isGuest);
+        self::assertFalse(Security::strict($this->user));
+        $controller = new \webvimark\modules\UserManagement\controllers\SecurityController('security', $this->module);
+        $previousController = Yii::$app->controller;
+        Yii::$app->controller = $controller;
+        try {
+            $markup = $controller->renderPartial('challenge', ['user' => $this->user, 'strict' => false, 'keys' => [], 'profile' => Security::profile($this->user), 'error' => null]);
+        } finally { Yii::$app->controller = $previousController; }
+        self::assertStringContainsString('Configurar Google Authenticator', $markup);
+        self::assertStringContainsString('btn btn-primary w-100', $markup);
+        $otp = Security::totpSetup($this->user);
+        self::assertTrue(Yii::$app->user->isGuest);
+        self::assertTrue(Security::confirmTotp($this->user, $otp->now()));
+        self::assertTrue(Security::recent($this->user));
+        self::assertTrue(Yii::$app->user->completeSecureLogin($this->user, 'totp'));
+        self::assertFalse(Yii::$app->user->isGuest);
+    }
+
     public function testAdminPasswordCannotCreateSessionAndCannotDowngrade(): void
     {
+        $this->module->requirePhishingResistant = true;
         $this->module->mfaPolicy = 'admins'; $this->user->superadmin = 1; $this->user->save(false);
         $form = new LoginForm(['username' => $this->user->username, 'password' => 'A security test phrase']);
         self::assertFalse($form->login()); self::assertTrue($form->requiresMfa); self::assertTrue(Yii::$app->user->isGuest);

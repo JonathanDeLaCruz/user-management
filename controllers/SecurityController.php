@@ -182,8 +182,7 @@ class SecurityController extends BaseController
     public function actionAudit()
     {
         if (!User::component()->isSuperadmin) throw new ForbiddenHttpException();
-        return $this->render('audit', ['provider' => new \yii\data\ActiveDataProvider([
-            'query' => (new Query())->from('{{%um_audit_log}}')->orderBy(['id' => SORT_DESC]), 'pagination' => ['pageSize' => 30],
-        ])]);
+        $searchModel = new \webvimark\modules\UserManagement\models\search\AuditLogSearch();
+        return $this->render('audit', ['provider' => $searchModel->search(Yii::$app->request->queryParams), 'searchModel' => $searchModel]);
     }
 }

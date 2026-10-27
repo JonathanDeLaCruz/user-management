@@ -40,7 +40,7 @@ $this->params['breadcrumbs'][] = $this->title;
 		<div class="d-grid">
 			<?= Html::submitButton(
 				'' . UserManagementModule::t('front', 'Recover'),
-				['class' => 'btn btn-primary']
+				['class' => 'btn btn-primary w-100']
 			) ?>
 		</div>
 	</div>

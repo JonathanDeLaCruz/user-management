@@ -11,7 +11,8 @@ class UserManagementModule extends \yii\base\Module
     /** optional, admins or all. Existing enrolled accounts always require MFA. */
     public $mfaPolicy = 'admins';
     public $mfaRequiredRoles = ['Admin'];
-    public $requirePhishingResistant = true;
+    /** TOTP is offered first; set true to require passkeys under the MFA policy. */
+    public $requirePhishingResistant = false;
     /** Exact HTTPS origin, including port when nonstandard. Never derived from the Host header. */
     public $webauthnOrigin;
     public $mfaEncryptionKey;

@@ -28,3 +28,17 @@ h2.lte-hide-title { font-size: 1.75rem; margin-bottom: 1.25rem; }
 .um-captcha .form-control { width: 100%; min-width: 0; }
 .auth-login { min-width: 0; }
 .auth-login .auth-links .btn { white-space: normal; }
+
+.um-security-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.um-security-page .card-body { padding: 1.5rem; }
+.um-security-settings .um-card { margin-bottom: 0; }
+.um-security-page .btn { white-space: normal; }
+.um-security-page #um-security-feedback:empty { display: none; }
+.um-security-key { display: grid; grid-template-columns: minmax(0, 1fr) minmax(6rem, 30%); gap: .75rem; align-items: center; }
+.um-security-key span { overflow-wrap: anywhere; }
+.um-security-session-heading { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; margin-bottom: 1rem; }
+.um-security-session-heading h2 { margin: 0; }
+.um-security-session-action { min-width: 9rem; }
+.um-audit-grid td { overflow-wrap: anywhere; max-width: 25rem; }
+@media (max-width: 991px) { .um-security-settings { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 575px) { .um-security-session-heading { grid-template-columns: minmax(0, 1fr); } .um-security-page .card-body { padding: 1rem; } }

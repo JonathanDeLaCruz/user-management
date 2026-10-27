@@ -47,7 +47,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					<div class="offset-sm-3 col-sm-9">
 						<?= Html::submitButton(
 							'' . UserManagementModule::t('back', 'Save'),
-							['class' => 'btn btn-primary']
+							['class' => 'btn btn-primary w-100']
 						) ?>
 					</div>
 				</div>

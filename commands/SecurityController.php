@@ -29,9 +29,11 @@ class SecurityController extends \yii\console\Controller
             }
         }
         $this->stdout('PHP ' . PHP_VERSION . ": OK\n");
-        try { Passkeys::origin(); $this->stdout("WebAuthn origin: configured\n"); }
-        catch (\Throwable $e) { $this->stderr($e->getMessage() . "\n"); return ExitCode::CONFIG; }
         $module = \webvimark\modules\UserManagement\UserManagementModule::instance();
+        if ($module->requirePhishingResistant || $module->webauthnOrigin || getenv('UM_WEBAUTHN_ORIGIN')) {
+            try { Passkeys::origin(); $this->stdout("WebAuthn origin: configured\n"); }
+            catch (\Throwable $e) { $this->stderr($e->getMessage() . "\n"); return ExitCode::CONFIG; }
+        } else $this->stdout("WebAuthn origin: optional (TOTP policy)\n");
         $key = base64_decode((string)($module->mfaEncryptionKey ?: getenv('UM_MFA_ENCRYPTION_KEY')), true);
         if ($key === false || strlen($key) !== 32) { $this->stderr("Configure a random 32-byte base64 UM_MFA_ENCRYPTION_KEY for TOTP.\n"); return ExitCode::CONFIG; }
         foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_audit_log'] as $table) {

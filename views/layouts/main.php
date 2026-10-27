@@ -23,11 +23,18 @@ $this->beginPage();
 <nav id="sidebar-navigation" aria-label="<?= Html::encode(UM::t('back', 'Main navigation')) ?>">
 <?php
 $items = array_merge([['label' => UM::t('back', 'Overview'), 'url' => ['/user-management/dashboard/index']]], UM::menuItems());
+if (!Yii::$app->user->isGuest) {
+    $items[] = ['label' => UM::t('front', 'Account security'), 'url' => ['/user-management/security/index']];
+    if (Yii::$app->user->isSuperadmin) $items[] = ['label' => UM::t('front', 'Security audit'), 'url' => ['/user-management/security/audit']];
+}
 $icons = ['M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M18 8h4 M20 6v4', 'M12 3 3 7v6c0 5 9 9 9 9s9-4 9-9V7Z', 'M14 7a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M10 11H2 M5 11v4 M8 11v3', 'M3 5h7l2 2h9v13H3Z', 'M3 12a9 9 0 1 0 3-7 M3 3v6h6 M12 7v5l3 2'];
+$icons[] = 'M12 3 3 7v6c0 5 9 9 9 9s9-4 9-9V7Z M9 12l2 2 4-4';
+$icons[] = 'M5 3h14v18H5Z M8 8h8 M8 12h8 M8 16h5';
 foreach ($items as $index => $item) {
     $route = $item['url'][0];
     $active = Yii::$app->controller->id === 'site' ? $index === 0 : str_starts_with('/' . Yii::$app->controller->route, substr($route, 0, strrpos($route, '/') + 1));
-    $icon = '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="' . $icons[$index] . '"/></svg>';
+    if (str_contains($route, '/security/')) $active = '/' . Yii::$app->controller->route === $route;
+    $icon = '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="' . ($icons[$index] ?? $icons[0]) . '"/></svg>';
     echo GhostHtml::a($icon . '<span class="sidebar-caption">' . Html::encode($item['label']) . '</span>', $item['url'], ['class' => 'sidebar-link' . ($active ? ' active' : ''), 'title' => $item['label'], 'aria-label' => $item['label']] + ($active ? ['aria-current' => 'page'] : []));
 }
 ?>
@@ -38,7 +45,6 @@ foreach ($items as $index => $item) {
 <?php if (!Yii::$app->user->isGuest): ?>
 <?= Html::beginForm(['/user-management/auth/logout'], 'post', ['class' => 'um-user-menu d-flex flex-wrap align-items-center gap-2']) ?>
 <span class="text-body-secondary"><?= Html::encode(Yii::$app->user->username) ?></span>
-<?= Html::a(Html::encode(UM::t('front', 'Account security')), ['/user-management/security/index'], ['class' => 'btn btn-primary btn-sm']) ?>
 <?= Html::submitButton(Html::encode(UM::t('back', 'Logout')), ['class' => 'btn btn-secondary btn-sm']) ?>
 <?= Html::endForm() ?>
 <?php endif ?>

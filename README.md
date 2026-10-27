@@ -119,7 +119,7 @@ El módulo configura `DbManager` para utilizar sus tablas RBAC. Si utilizas `aut
 
 ### 4. Crear el superadministrador
 
-Antes del primer acceso, configura `UM_WEBAUTHN_ORIGIN` con el origen HTTPS exacto de tu aplicación, por ejemplo `https://acceso.example.com` (sin rutas). Para desarrollo se admite `http://localhost:8081`. Incluye el puerto si no es el predeterminado. No se obtiene el dominio del encabezado `Host` y no se aceptan subdominios diferentes.
+Si vas a utilizar passkeys, configura `UM_WEBAUTHN_ORIGIN` con el origen HTTPS exacto de tu aplicación, por ejemplo `https://acceso.example.com` (sin rutas). Para desarrollo se admite `http://localhost:8081`. Incluye el puerto si no es el predeterminado. No se obtiene el dominio del encabezado `Host` y no se aceptan subdominios diferentes.
 
 Genera una clave para cifrar los secretos de las apps autenticadoras:
 
@@ -171,7 +171,7 @@ Los controladores del módulo ya incluyen este filtro en `components/BaseControl
 
 ## Seguridad de la cuenta
 
-La política predeterminada exige MFA a superadministradores y cuentas con el rol `Admin`, incluyendo roles que lo heredan. Después de verificar la contraseña, esas cuentas deben registrar o usar una passkey. La sesión completa no se crea antes de esa verificación. El dominio, el desafío de un solo uso, la firma, la pertenencia de la credencial y el PIN o biometría del dispositivo se validan en el servidor.
+La política predeterminada exige MFA a superadministradores y cuentas con el rol `Admin`, incluyendo roles que lo heredan. Después de verificar la contraseña, el método predeterminado es Google Authenticator (o una app TOTP compatible). En el primer ingreso se debe escanear el QR y confirmar un código de seis dígitos; la sesión completa no se crea hasta confirmar el segundo factor. Configura `UM_MFA_ENCRYPTION_KEY` antes del primer ingreso. También se pueden utilizar passkeys.
 
 En **Seguridad de la cuenta** (`/user-management/security/index`) puedes registrar una passkey de respaldo, eliminar factores, revisar sesiones activas y cerrarlas. Los cambios sensibles requieren una verificación reciente; la política obligatoria impide eliminar la última passkey. Las sesiones caducan por inactividad o por duración máxima y se revocan al cambiar la contraseña. Las cookies persistentes de «Recordarme» no restauran sesiones.
 
@@ -180,7 +180,7 @@ Opciones dentro de `modules['user-management']` (usa la misma política en web y
 ```php
 'mfaPolicy' => 'admins', // 'optional', 'admins' o 'all'
 'mfaRequiredRoles' => ['Admin'], // Tus roles administrativos; superadmin siempre se incluye con 'admins'.
-'requirePhishingResistant' => true,
+'requirePhishingResistant' => false, // true exige passkeys y desactiva TOTP y recuperación por códigos
 'sessionLifetime' => 86400,
 'sessionIdleTimeout' => 1800,
 ```
@@ -205,13 +205,13 @@ php yii user-management/security/check
 
 Los cambios de contraseña y factores generan avisos al correo confirmado del usuario cuando el remitente y SMTP están configurados. Con `useFileTransport => true` esos avisos se guardan en archivos.
 
-Los superadministradores pueden consultar **Auditoría de seguridad** en `/user-management/security/audit`. Registra cambios de cuentas, roles y permisos, verificaciones y revocaciones. No guarda contraseñas, secretos TOTP, códigos de recuperación, claves privadas ni cuerpos de peticiones. Para aplicar una retención de 90 días:
+El menú lateral incluye **Seguridad de la cuenta**. Los superadministradores también pueden consultar **Auditoría de seguridad** en `/user-management/security/audit`. Permite buscar por usuario, acción, IP o registro y filtrar por usuario, evento y fechas. Presenta las acciones con descripciones, muestra nombres de usuario y pagina los resultados del más reciente al más antiguo. Registra cambios de cuentas, roles y permisos, verificaciones y revocaciones. No guarda contraseñas, secretos TOTP, códigos de recuperación, claves privadas ni cuerpos de peticiones. Para aplicar una retención de 90 días:
 
 ```bash
 php yii user-management/security/cleanup 90
 ```
 
-Las nuevas tablas son `um_mfa`, `um_passkey`, `um_recovery_code`, `um_session` y `um_audit_log`; respetan `tablePrefix`. Aplica las migraciones antes de atender peticiones con esta versión. En una actualización, configura el origen y la clave antes de que los administradores inicien sesión.
+Las nuevas tablas son `um_mfa`, `um_passkey`, `um_recovery_code`, `um_session` y `um_audit_log`; respetan `tablePrefix`. Aplica las migraciones antes de atender peticiones con esta versión. En una actualización, configura la clave de cifrado antes de que los administradores inicien sesión; configura también el origen si utilizarás passkeys. En instalaciones que ya exigen passkeys, conserva explícitamente `requirePhishingResistant => true` para mantener esa política.
 
 ## PHP y comprobaciones
 
