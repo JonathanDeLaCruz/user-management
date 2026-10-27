@@ -1,5 +1,5 @@
 {
-  "name": "yii2-access/user-management",
+  "name": "joan/user-management",
   "description": "Yii2 user management and RBAC with Bootstrap 5 and PHP 8.2-8.5",
   "type": "yii2-extension",
   "autoload": {
@@ -8,6 +8,7 @@
     }
   },
   "replace": {
+    "yii2-access/user-management": "self.version",
     "jonathandelacruz/yii2-user-management": "self.version"
   },
   "require": {

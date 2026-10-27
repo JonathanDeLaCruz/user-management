@@ -4,11 +4,13 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 
 ## Instalación
 
-Instala la versión estable desde [Packagist](https://packagist.org/packages/yii2-access/user-management):
+Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "yii2-access/user-management:^3.0.0"
+composer require "joan/user-management:^3.1.1"
 ```
+
+El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
 
 Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--no-update` antes de instalar este paquete.
 
