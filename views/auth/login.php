@@ -32,6 +32,7 @@ $toggle = Html::button(
 ])->passwordInput(['autocomplete' => 'current-password']) ?>
 <?= Html::submitButton(UserManagementModule::t('front', 'Login'),['class'=>'btn btn-primary w-100 mt-2']) ?>
 <?php ActiveForm::end(); ?>
+<?= $this->render('_externalButtons') ?>
 <div class="auth-links d-flex flex-wrap gap-2 mt-4"><?= GhostHtml::a(Html::encode(UserManagementModule::t('front', 'Registration')),['/user-management/auth/registration'], ['class'=>'btn btn-secondary btn-sm flex-grow-1']) ?><?= GhostHtml::a(Html::encode(UserManagementModule::t('front', 'Password recovery')),['/user-management/auth/password-recovery'], ['class'=>'btn btn-secondary btn-sm flex-grow-1']) ?></div></div></div>
 <?php
 $this->registerJs(<<<'JS'

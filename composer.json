@@ -20,7 +20,9 @@
     "spomky-labs/otphp": "^11.3",
     "ext-openssl": "*",
     "bacon/bacon-qr-code": "^3.0",
-    "ext-xmlwriter": "*"
+    "ext-xmlwriter": "*",
+    "firebase/php-jwt": "^7.2",
+    "yiisoft/yii2-httpclient": "^2.0"
   },
   "config": {
     "allow-plugins": {

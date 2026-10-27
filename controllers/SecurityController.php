@@ -120,9 +120,11 @@ class SecurityController extends BaseController
     public function actionReauthenticate()
     {
         $user = $this->user(); Security::rate($user, 'reauth');
-        if (Security::strict($user) || !$user->validatePassword((string)Yii::$app->request->post('password', ''))
+        $password = (string)Yii::$app->request->post('password', '');
+        if (Security::strict($user) || (!\webvimark\modules\UserManagement\components\ExternalAuth::proof($user) && ($password === '' || !$user->validatePassword($password)))
             || (Security::enrolled($user) && !Security::verifyTotp($user, (string)Yii::$app->request->post('code', '')))) throw new ForbiddenHttpException();
         Security::markRecent($user, Security::enrolled($user) ? 'totp' : 'password');
+        Yii::$app->session->remove('um_external_reauth');
         return $this->redirect(['index']);
     }
 

@@ -1,5 +1,5 @@
 <?php
-return [
+$config = [
     'id' => 'module-test-application', 'name' => 'Control de acceso', 'language' => 'es',
     'basePath' => dirname(__DIR__), 'vendorPath' => dirname(__DIR__, 4) . '/vendor',
     'runtimePath' => getenv('UM_RUNTIME_PATH') ?: dirname(__DIR__) . '/runtime',
@@ -18,3 +18,10 @@ return [
     ],
     'params' => ['adminEmail' => 'security-tests@example.test'],
 ];
+if (getenv('UM_TEST_EXTERNAL_PROVIDERS') === '1') {
+    foreach (['google', 'microsoft'] as $provider) $config['modules']['user-management']['externalAuth'][$provider] = [
+        'enabled' => true, 'clientId' => 'test-' . $provider, 'clientSecret' => 'test-only-secret',
+        'redirectUri' => (getenv('UM_WEBAUTHN_ORIGIN') ?: 'http://localhost') . '/user-management/external-auth/callback?provider=' . $provider,
+    ];
+}
+return $config;

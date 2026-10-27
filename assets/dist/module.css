@@ -28,6 +28,11 @@ h2.lte-hide-title { font-size: 1.75rem; margin-bottom: 1.25rem; }
 .um-captcha .form-control { width: 100%; min-width: 0; }
 .auth-login { min-width: 0; }
 .auth-login .auth-links .btn { white-space: normal; }
+.auth-login .um-external-login .um-external-button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 3rem; padding: .75rem 1rem; }
+.auth-login .um-external-google { color: #1f1f1f; background: #f2f2f2; border-color: transparent; }
+.auth-login .um-external-google:hover { color: #1f1f1f; background: #e5e5e5; }
+.um-external-google img { flex: 0 0 20px; object-fit: contain; }
+.um-external-button:focus-visible { outline: 3px solid #80b7ff; outline-offset: 2px; }
 
 .um-security-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
 .um-security-page .card-body { padding: 1.5rem; }

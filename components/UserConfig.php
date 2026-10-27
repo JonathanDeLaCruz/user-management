@@ -16,6 +16,14 @@ class UserConfig extends User
 {
     private ?string $verifiedMethod = null;
 
+    public function completeExternalLogin(\webvimark\modules\UserManagement\models\User $identity, string $provider): bool
+    {
+        if (!in_array($provider, ['google', 'microsoft'], true)) throw new \InvalidArgumentException('Invalid external provider.');
+        $this->verifiedMethod = $provider;
+        try { return $this->login($identity, 0); }
+        finally { $this->verifiedMethod = null; }
+    }
+
     public function completeSecureLogin(\webvimark\modules\UserManagement\models\User $identity, string $method): bool
     {
         if (!in_array($method, ['passkey', 'totp'], true)) throw new \InvalidArgumentException('Invalid authentication method.');
@@ -43,7 +51,7 @@ class UserConfig extends User
     {
         if (!parent::beforeLogout($identity)) return false;
         if ($this->enableSession) SecuritySessions::revoke((int)$identity->getId(), SecuritySessions::currentId());
-        foreach (['um_pending_login', 'um_ceremony', 'um_recovered_user', 'um_security_verified', 'um_totp_setup', 'um_session_token'] as $key) Yii::$app->session->remove($key);
+        foreach (['um_pending_login', 'um_ceremony', 'um_recovered_user', 'um_security_verified', 'um_totp_setup', 'um_session_token', 'um_external_flow', 'um_external_reauth'] as $key) Yii::$app->session->remove($key);
         return true;
     }
 	/**

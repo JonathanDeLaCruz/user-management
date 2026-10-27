@@ -8,7 +8,7 @@ $t = fn($label) => Html::encode(UM::t('front', $label));
 ?>
 <div class="auth-login card um-card um-security-page"><div class="card-body p-4 p-md-5">
 <h1 class="h3 mb-3"><?= Html::encode($this->title) ?></h1>
-<p><?= $t('Your password was verified. Complete the security check to continue.') ?></p>
+<p><?= $t('The first sign-in step was verified. Complete the security check to continue.') ?></p>
 <?php if ($strict): ?><p class="alert alert-info"><?= $t('This account requires a passkey. Authenticator and recovery codes cannot replace it.') ?></p><?php endif ?>
 <p id="um-security-feedback" role="status" aria-live="polite" class="text-danger"></p>
 <?php if (!$strict && $setup): ?>

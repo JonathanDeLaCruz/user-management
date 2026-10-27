@@ -41,7 +41,7 @@ class User extends UserIdentity
     public function afterDelete()
     {
         parent::afterDelete();
-        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session'] as $table) {
+        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_external_identity'] as $table) {
             if (Yii::$app->db->getTableSchema('{{%' . $table . '}}')) Yii::$app->db->createCommand()->delete('{{%' . $table . '}}', ['user_id' => $this->id])->execute();
         }
     }

@@ -18,6 +18,11 @@ class UserManagementModule extends \yii\base\Module
     public $mfaEncryptionKey;
     public $sessionLifetime = 86400;
     public $sessionIdleTimeout = 1800;
+    /** Optional OpenID Connect providers. Disabled until explicitly configured. */
+    public $externalAuth = [
+        'google' => ['enabled' => false],
+        'microsoft' => ['enabled' => false],
+    ];
 	public static function instance(): self
 	{
 		$module = Yii::$app->getModule('user-management');

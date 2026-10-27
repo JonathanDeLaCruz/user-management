@@ -10,6 +10,9 @@ final class SecurityPresentation
     public static function events(): array
     {
         $labels = [
+            'external.linked' => 'External account linked', 'external.unlinked' => 'External account unlinked',
+            'external.login' => 'External sign-in verified', 'external.registered' => 'Account created through an external provider',
+            'external.reauthenticated' => 'External account reverified', 'external.failed' => 'External sign-in failed',
             'session.started' => 'Signed in', 'session.revoked' => 'Sessions signed out',
             'login.failed' => 'Sign-in attempt rejected', 'mfa.challenge' => 'Additional verification requested',
             'mfa.failed' => 'Additional verification failed', 'passkey.failed' => 'Passkey verification failed',
@@ -67,8 +70,9 @@ final class SecurityPresentation
         $data = json_decode($row['details'] ?? '', true);
         $data = is_array($data) ? $data : [];
         $t = fn($label, $params = []) => UM::t('front', $label, $params);
+        if (str_starts_with($row['event'], 'external.')) return $t('Identity provider: {provider}.', ['provider' => ['google' => 'Google', 'microsoft' => 'Microsoft'][$data['provider'] ?? ''] ?? $t('Not recorded')]);
         if ($row['event'] === 'session.started') {
-            $method = ['password' => 'Password', 'totp' => 'Authenticator code', 'passkey' => 'Passkey'][$data['method'] ?? ''] ?? 'Verification method';
+            $method = ['password' => 'Password', 'totp' => 'Authenticator code', 'passkey' => 'Passkey', 'google' => 'Google', 'microsoft' => 'Microsoft'][$data['method'] ?? ''] ?? 'Verification method';
             return $t('Signed in using: {method}.', ['method' => $t($method)]);
         }
         if ($row['event'] === 'session.revoked') return $t('Sessions were revoked. A new sign-in is required on the affected devices.');

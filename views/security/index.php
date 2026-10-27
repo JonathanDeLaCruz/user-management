@@ -1,10 +1,11 @@
 <?php
 use yii\helpers\Html;
 use webvimark\modules\UserManagement\components\SecuritySessions;
+use webvimark\modules\UserManagement\components\ExternalAuth;
 use webvimark\modules\UserManagement\UserManagementModule as UM;
 $this->title = UM::t('front', 'Account security');
 $this->params['breadcrumbs'][] = $this->title;
-$t = fn($text) => Html::encode(UM::t('front', $text));
+$t = fn($text, $params = []) => Html::encode(UM::t('front', $text, $params));
 $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) {
     $html = Html::beginForm([$route], 'post', ['class' => 'um-security-action']);
     foreach ($fields as $name => $value) $html .= Html::hiddenInput($name, $value);
@@ -17,9 +18,17 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 <section class="card um-card mb-4"><div class="card-body"><h2 class="h5"><?= $t('Verify your identity') ?></h2>
 <?php if ($keys): ?><?= $this->render('_passkeyButton', ['operation' => 'reauth', 'label' => 'Verify with a passkey']) ?><?php endif ?>
 <?php if (!$strict): ?>
+<?php foreach (ExternalAuth::links($user) as $provider => $link): ?>
+<?php if (isset(ExternalAuth::enabled()[$provider]) && ExternalAuth::config($provider)['clientId'] === $link['client_id']): ?>
+<?= Html::beginForm(['/user-management/external-auth/start', 'provider' => $provider], 'post', ['class' => 'mt-3']) ?>
+<?= Html::hiddenInput('intent', 'reauth') ?>
+<?= Html::submitButton($t('Verify with {provider}', ['provider' => ucfirst($provider)]), ['class' => 'btn btn-secondary w-100']) ?><?= Html::endForm() ?>
+<?php endif ?><?php endforeach ?>
 <?= Html::beginForm(['reauthenticate'], 'post', ['class' => 'mt-3']) ?>
+<?php if (!ExternalAuth::proof($user)): ?>
 <?= Html::label($t('Password'), 'um-current-password', ['class' => 'form-label']) ?>
 <?= Html::passwordInput('password', '', ['id' => 'um-current-password', 'class' => 'form-control mb-3', 'autocomplete' => 'current-password', 'required' => true]) ?>
+<?php else: ?><p><?= $t('Your external account was verified. Complete the additional verification to continue.') ?></p><?php endif ?>
 <?php if ($profile['totp_secret']): ?>
 <?= Html::label($t('Authenticator code'), 'um-reauth-code', ['class' => 'form-label']) ?>
 <?= Html::textInput('code', '', ['id' => 'um-reauth-code', 'class' => 'form-control mb-3', 'autocomplete' => 'one-time-code', 'inputmode' => 'numeric', 'required' => true]) ?>
@@ -63,6 +72,7 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 <section class="card um-card mt-4"><div class="card-body"><div class="um-security-session-heading"><h2 class="h5"><?= $t('Active sessions') ?></h2>
 <?php if ($recent): ?><?= $postButton('revoke-session', ['id' => 'others'], 'Sign out other sessions', 'danger') ?><?php endif ?></div>
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th><?= $t('Device') ?></th><th>IP</th><th><?= $t('Last activity') ?></th><th><?= $t('Method') ?></th><th></th></tr></thead><tbody>
-<?php foreach ($sessions as $session): ?><tr><td class="text-break"><?= Html::encode(\webvimark\modules\UserManagement\components\SecurityPresentation::device($session['user_agent'])) ?><?php if ($session['id'] === SecuritySessions::currentId()): ?><span class="badge bg-success ms-2"><?= $t('Current session') ?></span><?php endif ?></td><td><?= Html::encode($session['ip']) ?></td><td><?= Html::encode(Yii::$app->formatter->asDatetime($session['last_seen_at'])) ?></td><td><?= $t(['password' => 'Password', 'passkey' => 'Passkey', 'totp' => 'Authenticator code'][$session['method']] ?? 'Verification method') ?></td><td class="um-security-session-action"><?php if ($recent): ?><?= $postButton('revoke-session', ['id' => $session['id']], 'Sign out', 'danger') ?><?php endif ?></td></tr><?php endforeach ?>
+<?php foreach ($sessions as $session): ?><tr><td class="text-break"><?= Html::encode(\webvimark\modules\UserManagement\components\SecurityPresentation::device($session['user_agent'])) ?><?php if ($session['id'] === SecuritySessions::currentId()): ?><span class="badge bg-success ms-2"><?= $t('Current session') ?></span><?php endif ?></td><td><?= Html::encode($session['ip']) ?></td><td><?= Html::encode(Yii::$app->formatter->asDatetime($session['last_seen_at'])) ?></td><td><?= $t(['password' => 'Password', 'passkey' => 'Passkey', 'totp' => 'Authenticator code', 'google' => 'Google', 'microsoft' => 'Microsoft'][$session['method']] ?? 'Verification method') ?></td><td class="um-security-session-action"><?php if ($recent): ?><?= $postButton('revoke-session', ['id' => $session['id']], 'Sign out', 'danger') ?><?php endif ?></td></tr><?php endforeach ?>
 </tbody></table></div></div></section>
+<?= $this->render('_externalAccounts', compact('user', 'recent')) ?>
 </div>

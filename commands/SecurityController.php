@@ -36,8 +36,13 @@ class SecurityController extends \yii\console\Controller
         } else $this->stdout("WebAuthn origin: optional (TOTP policy)\n");
         $key = base64_decode((string)($module->mfaEncryptionKey ?: getenv('UM_MFA_ENCRYPTION_KEY')), true);
         if ($key === false || strlen($key) !== 32) { $this->stderr("Configure a random 32-byte base64 UM_MFA_ENCRYPTION_KEY for TOTP.\n"); return ExitCode::CONFIG; }
-        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_audit_log'] as $table) {
+        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_audit_log', 'um_external_identity'] as $table) {
             if (!Yii::$app->db->getTableSchema('{{%' . $table . '}}', true)) { $this->stderr("Run the module migrations.\n"); return ExitCode::CONFIG; }
+        }
+        foreach (\webvimark\modules\UserManagement\components\ExternalAuth::enabled() as $provider => $label) {
+            try { \webvimark\modules\UserManagement\components\ExternalAuth::config($provider); }
+            catch (\Throwable $e) { $this->stderr($e->getMessage() . "\n"); return ExitCode::CONFIG; }
+            $this->stdout($label . ": configured (external connection not tested)\n");
         }
         $this->stdout("Security tables and TOTP encryption key: OK\n");
         return ExitCode::OK;

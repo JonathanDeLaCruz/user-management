@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.1.1"
+composer require "joan/user-management:^3.2.0"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -170,6 +170,114 @@ Los controladores del módulo ya incluyen este filtro en `components/BaseControl
 2. Abre **Permisos**, actualiza las rutas y vincúlalas a permisos.
 3. Añade los permisos a un rol en **Roles**.
 4. Asigna los roles a las cuentas en **Usuarios**.
+
+## Iniciar sesión con Google y Microsoft
+
+Ambos proveedores vienen **desactivados por defecto**. Funcionan de forma independiente y no requieren cambiar el login de usuario y contraseña. El paquete instala las bibliotecas necesarias; antes de habilitarlos ejecuta:
+
+```bash
+php yii migrate --migrationPath=@webvimark/modules/UserManagement/migrations
+```
+
+Se añade `um_external_identity` para vincular la identidad del proveedor con una cuenta local. Respeta `tablePrefix`. No se guardan tokens de acceso, tokens de actualización ni secretos del proveedor en esa tabla.
+
+Añade `externalAuth` a la configuración existente del módulo en `config/web.php`:
+
+```php
+'user-management' => [
+    'class' => webvimark\modules\UserManagement\UserManagementModule::class,
+    // Conserva aquí tus opciones MFA y las demás opciones del módulo.
+    'externalAuth' => [
+        'google' => [
+            'enabled' => false, // Cambia a true cuando hayas configurado sus credenciales.
+            'clientId' => getenv('UM_GOOGLE_CLIENT_ID') ?: '',
+            'clientSecret' => getenv('UM_GOOGLE_CLIENT_SECRET') ?: '',
+            'redirectUri' => 'https://tu-dominio.com/user-management/external-auth/callback?provider=google',
+            'allowRegistration' => false,
+            'roles' => [],
+        ],
+        'microsoft' => [
+            'enabled' => false,
+            'clientId' => getenv('UM_MICROSOFT_CLIENT_ID') ?: '',
+            'clientSecret' => getenv('UM_MICROSOFT_CLIENT_SECRET') ?: '',
+            'redirectUri' => 'https://tu-dominio.com/user-management/external-auth/callback?provider=microsoft',
+            'tenant' => 'common',
+            'allowRegistration' => false,
+            'roles' => [],
+        ],
+    ],
+],
+```
+
+Usa las URLs reales de tu aplicación. Si no tienes URLs amigables, registra la dirección completa que utiliza tu aplicación, por ejemplo `https://tu-dominio.com/index.php?r=user-management%2Fexternal-auth%2Fcallback&provider=google`. En desarrollo se admite `http://localhost:8081/user-management/external-auth/callback?provider=google` y la equivalente para Microsoft. Conserva el mismo host y puerto durante el flujo; en producción utiliza HTTPS.
+
+### Activar Google
+
+1. Crea o selecciona un proyecto en [Google Cloud Console](https://console.cloud.google.com/).
+2. Configura la pantalla de consentimiento de Google Auth Platform: nombre, datos de contacto y audiencia. Si la aplicación está en modo de prueba, añade las cuentas de prueba permitidas.
+3. Crea un cliente OAuth de tipo **Aplicación web** y registra como URI de redireccionamiento autorizada el valor exacto de `redirectUri`, incluyendo ruta y `?provider=google`.
+4. Configura `UM_GOOGLE_CLIENT_ID` y `UM_GOOGLE_CLIENT_SECRET` en el entorno del servidor web; no los publiques en Git ni los escribas en `vendor`.
+5. Cambia únicamente `externalAuth['google']['enabled']` a `true`.
+
+Se mostrará **Continuar con Google**. No necesitas activar Google Authenticator para habilitar este proveedor: son funciones diferentes. Referencia: [OpenID Connect de Google](https://developers.google.com/identity/openid-connect/openid-connect).
+
+### Activar Microsoft
+
+1. Entra en [Microsoft Entra](https://entra.microsoft.com/) y abre **Registros de aplicaciones**. Registra una aplicación y elige los tipos de cuenta que admitirás.
+2. Añade una plataforma **Web** con el valor exacto de `redirectUri`, incluyendo `?provider=microsoft`.
+3. Copia el **Id. de aplicación (cliente)** a `UM_MICROSOFT_CLIENT_ID`. Crea un secreto y guarda su **valor**, no su identificador, en `UM_MICROSOFT_CLIENT_SECRET`. Renueva el valor de la variable cuando renueves un secreto que vaya a caducar.
+4. Configura `tenant` de acuerdo con la audiencia registrada:
+
+| `tenant` | Cuentas admitidas |
+|---|---|
+| `common` | Cuentas personales y de organizaciones compatibles con el registro de la aplicación. |
+| `organizations` | Cuentas de trabajo o educativas. |
+| `consumers` | Cuentas personales Microsoft. |
+| Id. GUID de tu directorio, en minúsculas | Solo cuentas de ese directorio, incluidos invitados autorizados. |
+
+5. Cambia `externalAuth['microsoft']['enabled']` a `true`.
+
+Se mostrará **Continuar con Microsoft**. Se solicitan únicamente `openid profile email`; no se pide acceso a Microsoft Graph, contactos, archivos ni acceso sin conexión. Referencia: [OpenID Connect de Microsoft](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc).
+
+### Vincular cuentas existentes y permitir registros nuevos
+
+Con `allowRegistration => false`, el propietario debe entrar con su método habitual, completar MFA si corresponde y abrir **Seguridad de la cuenta → Cuentas vinculadas → Vincular Google/Microsoft**. Las vinculaciones y sus cambios requieren verificación reciente. Después podrá utilizar ese proveedor para entrar en la misma cuenta, conservando sus roles y permisos.
+
+Para permitir altas nuevas mediante un proveedor, cambia su `allowRegistration` a `true`. Es independiente de `enableRegistration`, que controla el formulario de registro local. `roles` contiene únicamente los nombres de los roles que quieras asignar en esas altas; deben existir previamente. Con `roles => []` no se asigna ningún rol y las cuentas se crean sin acceso de superadministrador. `rolesAfterRegistration` no se aplica a estas altas externas.
+
+No se vinculan cuentas automáticamente por coincidencia de correo. Si Google devuelve un correo verificado que ya pertenece a una cuenta local, el usuario debe entrar primero en esa cuenta y vincular Google. Microsoft se identifica por su emisor e identificador estable, no por `email` ni `preferred_username`; sus correos no se marcan como verificados. Si `useEmailAsLogin` está desactivado, se genera un nombre de usuario único. Si está activado, las altas externas requieren un correo verificado de Google; para Microsoft crea primero la cuenta local y vincúlala.
+
+Las cuentas creadas externamente tienen una contraseña aleatoria que no se entrega al usuario. Para acceder por contraseña pueden restablecerla mediante un correo local confirmado o pedir al administrador que la establezca por el procedimiento habitual. El acceso externo conserva siempre la política MFA del módulo: los administradores y las cuentas con un factor registrado completan su verificación adicional antes de recibir una sesión completa. No se confía automáticamente en afirmaciones MFA del proveedor para omitir esa comprobación.
+
+### Desactivar y desvincular
+
+Para desactivar Google o Microsoft, cambia su `enabled` a `false` o elimina su entrada de `externalAuth`. Se oculta su botón y se rechazan los inicios y las respuestas pendientes, aunque la URL se invoque directamente. No se realizan solicitudes a proveedores desactivados. Desactivar no borra vinculaciones ni cierra sesiones ya iniciadas; puedes cerrarlas desde **Sesiones activas**. Si vuelves a habilitar el mismo cliente, se conservan sus vinculaciones.
+
+Para detener solamente las altas nuevas, conserva `enabled => true` y cambia `allowRegistration` a `false`; las cuentas vinculadas podrán seguir entrando.
+
+Para retirar una vinculación concreta, usa **Cuentas vinculadas → Desvincular**. Se requiere verificación reciente y otra cuenta vinculada de un proveedor habilitado, o confirmar la contraseña local. Una passkey o un código TOTP por sí solos no sustituyen el primer paso de este login. Así se evita retirar el último método de entrada de una cuenta externa. Se cierran sus otras sesiones al desvincular.
+
+Para volver a verificar una cuenta externa sin contraseña local, utiliza **Verificar con Google/Microsoft** en Seguridad de la cuenta y completa después el código TOTP si corresponde. La política estricta sigue exigiendo una passkey.
+
+### Opciones y comprobación
+
+| Opción de cada proveedor | Predeterminado | Uso |
+|---|---|---|
+| `enabled` | `false` | Activa el proveedor; debe ser un booleano. |
+| `clientId` | Vacío | Identificador del cliente de tu aplicación. |
+| `clientSecret` | Vacío | Secreto del cliente; cargar desde el entorno. |
+| `redirectUri` | Vacío | URL de retorno exacta y registrada en el proveedor. |
+| `allowRegistration` | `false` | Permite crear cuentas locales nuevas. |
+| `roles` | `[]` | Roles asignados únicamente a las altas externas nuevas. |
+| `tenant` (Microsoft) | `common` | Restringe la audiencia de Microsoft. |
+
+```bash
+php yii user-management/security/check
+```
+
+El comando valida las opciones de los proveedores que declares también en la configuración de consola, sin imprimir secretos ni iniciar sesión en ellos. Si deseas comprobarlas, comparte la misma configuración `externalAuth` entre web y consola. Los proveedores desactivados no requieren credenciales. El servidor necesita salida HTTPS hacia los servicios de Google/Microsoft y certificados raíz actualizados; no desactives la validación TLS. Cada intento dura cinco minutos y es de un solo uso; si abres otro intento en la misma sesión, sustituye al anterior.
+
+Los fallos, vinculaciones, desvinculaciones, altas y verificaciones externas se muestran en la auditoría con el nombre del proveedor. Los permisos siguen gestionándose en el módulo.
 
 ## Seguridad de la cuenta
 
