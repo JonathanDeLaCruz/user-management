@@ -2,8 +2,10 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 use webvimark\modules\UserManagement\UserManagementModule as UM;
+\webvimark\modules\UserManagement\assets\DashboardAsset::register($this);
 $this->title = UM::t('back', 'Overview');
 ?>
+<div class="um-dashboard">
 <div class="row g-3 mb-4">
 <?php $statRoutes = ['Users' => 'user', 'Roles' => 'role', 'Permissions' => 'permission', 'Visit log' => 'user-visit-log']; foreach ($stats as $label => $value): ?>
 <div class="col-6 col-lg-3"><a class="card h-100 stat-link" href="<?= Url::to(['/user-management/' . $statRoutes[$label] . '/index']) ?>"><div class="card-body">
@@ -55,3 +57,4 @@ $maximum = $step * 4;
 <?php endif ?>
 </div>
 </section>
+</div>

@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.2.0"
+composer require "joan/user-management:^3.2.1"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -16,6 +16,10 @@ Si utilizas `webvimark/module-user-management`, elimina esa dependencia con `--n
 
 
 El módulo incluye el diseño completo: menú lateral minimizable, formularios de acceso y un panel con gráfica de actividad. Se muestra automáticamente en sus rutas. El inicio está en `/user-management/dashboard/index`. Se conserva el namespace `webvimark\modules\UserManagement`.
+
+### Integración con otros layouts
+
+El dashboard registra automáticamente sus propios recursos, incluida la gráfica de actividad, desde su vista. Puedes utilizar el layout de tu aplicación o de una plantilla como `yii2-tecnm-ui` sin registrar assets adicionales. No necesitas añadir `LayoutAsset::register()` en `on beforeAction` para que se muestre la gráfica. Si añadiste esa línea como solución provisional, puedes retirarla después de actualizar el paquete. Los estilos del dashboard están limitados a su contenedor.
 
 ## Configuración
 
@@ -283,7 +287,7 @@ Los fallos, vinculaciones, desvinculaciones, altas y verificaciones externas se 
 
 La política predeterminada exige MFA a superadministradores y cuentas con el rol `Admin`, incluyendo roles que lo heredan. Después de verificar la contraseña, el método predeterminado es Google Authenticator (o una app TOTP compatible). En el primer ingreso se debe escanear el QR y confirmar un código de seis dígitos; la sesión completa no se crea hasta confirmar el segundo factor. Configura `UM_MFA_ENCRYPTION_KEY` antes del primer ingreso. También se pueden utilizar passkeys.
 
-En **Seguridad de la cuenta** (`/user-management/security/index`) puedes registrar una passkey de respaldo, eliminar factores, revisar sesiones activas y cerrarlas. Los cambios sensibles requieren una verificación reciente; la política obligatoria impide eliminar la última passkey. Las sesiones caducan por inactividad o por duración máxima y se revocan al cambiar la contraseña. Las cookies persistentes de «Recordarme» no restauran sesiones.
+En **Seguridad de la cuenta** (`/user-management/security/index`) puedes registrar una passkey de respaldo, eliminar factores, revisar sesiones activas y cerrarlas. Los cambios sensibles requieren una verificación reciente; la política obligatoria impide eliminar la última passkey. Las tarjetas de claves de acceso y autenticación mantienen la misma altura cuando se muestran en paralelo. Si la contraseña o el código de reautenticación son incorrectos, los errores se muestran en el mismo formulario, sin habilitar cambios sensibles. Las sesiones caducan por inactividad o por duración máxima y se revocan al cambiar la contraseña. Las cookies persistentes de «Recordarme» no restauran sesiones.
 
 Opciones dentro de `modules['user-management']` (usa la misma política en web y consola):
 

@@ -24,4 +24,9 @@ if (getenv('UM_TEST_EXTERNAL_PROVIDERS') === '1') {
         'redirectUri' => (getenv('UM_WEBAUTHN_ORIGIN') ?: 'http://localhost') . '/user-management/external-auth/callback?provider=' . $provider,
     ];
 }
+if (getenv('UM_TEST_EXTERNAL_LAYOUT') === '1') {
+    $config['modules']['user-management']['on beforeAction'] = static function ($event) {
+        if ($event->action->controller->id === 'dashboard') $event->action->controller->layout = '@app/views/layouts/external';
+    };
+}
 return $config;

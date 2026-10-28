@@ -34,7 +34,9 @@ h2.lte-hide-title { font-size: 1.75rem; margin-bottom: 1.25rem; }
 .um-external-google img { flex: 0 0 20px; object-fit: contain; }
 .um-external-button:focus-visible { outline: 3px solid #80b7ff; outline-offset: 2px; }
 
-.um-security-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.um-security-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: stretch; }
+.um-security-settings > div { display: flex; min-width: 0; }
+.um-security-settings > div > .um-card { flex: 1; }
 .um-security-page .card-body { padding: 1.5rem; }
 .um-security-settings .um-card { margin-bottom: 0; }
 .um-security-page .btn { white-space: normal; }

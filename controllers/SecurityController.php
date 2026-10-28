@@ -119,13 +119,22 @@ class SecurityController extends BaseController
 
     public function actionReauthenticate()
     {
-        $user = $this->user(); Security::rate($user, 'reauth');
-        $password = (string)Yii::$app->request->post('password', '');
-        if (Security::strict($user) || (!\webvimark\modules\UserManagement\components\ExternalAuth::proof($user) && ($password === '' || !$user->validatePassword($password)))
-            || (Security::enrolled($user) && !Security::verifyTotp($user, (string)Yii::$app->request->post('code', '')))) throw new ForbiddenHttpException();
-        Security::markRecent($user, Security::enrolled($user) ? 'totp' : 'password');
-        Yii::$app->session->remove('um_external_reauth');
-        return $this->redirect(['index']);
+        $user = $this->user();
+        $reauthModel = new \webvimark\modules\UserManagement\models\forms\ReauthenticationForm(['user' => $user]);
+        $reauthModel->load(Yii::$app->request->post(), '');
+        try {
+            Security::rate($user, 'reauth');
+            if ($reauthModel->verify()) {
+                Security::markRecent($user, $reauthModel->verificationMethod());
+                Yii::$app->session->remove('um_external_reauth');
+                return $this->redirect(['index']);
+            }
+        } catch (ForbiddenHttpException $e) {
+            $reauthModel->addError('password', UM::t('front', 'Too many attempts'));
+        }
+        $reauthModel->password = ''; $reauthModel->code = '';
+        Audit::record('reauth.failed', (string)$user->id);
+        return $this->render('index', $this->data($user, compact('reauthModel')));
     }
 
     public function actionTotpSetup()

@@ -17,6 +17,11 @@
  * NOTE: this file must be saved in UTF-8 encoding.
  */
 return [
+    'Enter a valid six-digit authenticator code.' => 'Escribe un código válido de seis dígitos de tu app autenticadora.',
+    'Password is incorrect.' => 'La contraseña no es correcta.',
+    'The authenticator code is incorrect, expired or already used.' => 'El código de la app autenticadora es incorrecto, caducó o ya se utilizó.',
+    'Review the highlighted fields.' => 'Revisa los campos señalados.',
+    'Identity verification rejected' => 'Verificación de identidad rechazada',
     'Continue with {provider}' => 'Continuar con {provider}',
     'Linked accounts' => 'Cuentas vinculadas',
     'Link an account to use it at sign-in. Your local roles and additional verification still apply.' => 'Vincula una cuenta para usarla al iniciar sesión. Se mantienen tus roles y la verificación adicional del módulo.',

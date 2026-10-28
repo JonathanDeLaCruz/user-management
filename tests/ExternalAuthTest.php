@@ -205,7 +205,10 @@ final class ExternalAuthTest extends TestCase
             $controller = new webvimark\modules\UserManagement\controllers\SecurityController('security', $this->module);
             Yii::$app->controller = $controller;
             Yii::$app->request->setBodyParams([]);
-            $this->rejects(fn() => $controller->actionReauthenticate());
+            $html = $controller->actionReauthenticate();
+            self::assertIsString($html);
+            self::assertStringContainsString('alert alert-danger', $html);
+            self::assertFalse(Security::recent($this->user));
             Yii::$app->request->setBodyParams(['code' => $otp->at(time() + 30)]);
             $controller->actionReauthenticate(); self::assertTrue(Security::recent($this->user));
             self::assertFalse(ExternalAuth::proof($this->user));

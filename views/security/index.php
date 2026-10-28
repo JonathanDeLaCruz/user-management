@@ -6,6 +6,7 @@ use webvimark\modules\UserManagement\UserManagementModule as UM;
 $this->title = UM::t('front', 'Account security');
 $this->params['breadcrumbs'][] = $this->title;
 $t = fn($text, $params = []) => Html::encode(UM::t('front', $text, $params));
+$reauthModel = $reauthModel ?? new \webvimark\modules\UserManagement\models\forms\ReauthenticationForm(['user' => $user]);
 $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) {
     $html = Html::beginForm([$route], 'post', ['class' => 'um-security-action']);
     foreach ($fields as $name => $value) $html .= Html::hiddenInput($name, $value);
@@ -14,8 +15,9 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 ?>
 <div class="um-security-page">
 <p id="um-security-feedback" role="status" aria-live="polite" class="text-danger"></p>
-<?php if (!$recent): ?>
+<?php if (!$recent || $reauthModel->hasErrors()): ?>
 <section class="card um-card mb-4"><div class="card-body"><h2 class="h5"><?= $t('Verify your identity') ?></h2>
+<?php if ($reauthModel->hasErrors()): ?><?= Html::errorSummary($reauthModel, ['class' => 'alert alert-danger', 'role' => 'alert', 'header' => $t('Review the highlighted fields.')]) ?><?php endif ?>
 <?php if ($keys): ?><?= $this->render('_passkeyButton', ['operation' => 'reauth', 'label' => 'Verify with a passkey']) ?><?php endif ?>
 <?php if (!$strict): ?>
 <?php foreach (ExternalAuth::links($user) as $provider => $link): ?>
@@ -27,11 +29,13 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 <?= Html::beginForm(['reauthenticate'], 'post', ['class' => 'mt-3']) ?>
 <?php if (!ExternalAuth::proof($user)): ?>
 <?= Html::label($t('Password'), 'um-current-password', ['class' => 'form-label']) ?>
-<?= Html::passwordInput('password', '', ['id' => 'um-current-password', 'class' => 'form-control mb-3', 'autocomplete' => 'current-password', 'required' => true]) ?>
+<?= Html::activePasswordInput($reauthModel, 'password', ['value' => '', 'id' => 'um-current-password', 'class' => 'form-control mb-3' . ($reauthModel->hasErrors('password') ? ' is-invalid' : ''), 'autocomplete' => 'current-password', 'required' => true, 'aria-invalid' => $reauthModel->hasErrors('password') ? 'true' : 'false', 'aria-describedby' => 'um-password-error']) ?>
+<?= Html::error($reauthModel, 'password', ['id' => 'um-password-error', 'class' => 'invalid-feedback d-block']) ?>
 <?php else: ?><p><?= $t('Your external account was verified. Complete the additional verification to continue.') ?></p><?php endif ?>
 <?php if ($profile['totp_secret']): ?>
 <?= Html::label($t('Authenticator code'), 'um-reauth-code', ['class' => 'form-label']) ?>
-<?= Html::textInput('code', '', ['id' => 'um-reauth-code', 'class' => 'form-control mb-3', 'autocomplete' => 'one-time-code', 'inputmode' => 'numeric', 'required' => true]) ?>
+<?= Html::activeTextInput($reauthModel, 'code', ['value' => '', 'id' => 'um-reauth-code', 'class' => 'form-control mb-3' . ($reauthModel->hasErrors('code') ? ' is-invalid' : ''), 'autocomplete' => 'one-time-code', 'inputmode' => 'numeric', 'pattern' => '[0-9]{6}', 'maxlength' => 6, 'required' => true, 'aria-invalid' => $reauthModel->hasErrors('code') ? 'true' : 'false', 'aria-describedby' => 'um-code-error']) ?>
+<?= Html::error($reauthModel, 'code', ['id' => 'um-code-error', 'class' => 'invalid-feedback d-block']) ?>
 <?php endif ?>
 <?= Html::submitButton($t('Confirm'), ['class' => 'btn btn-primary w-100']) ?><?= Html::endForm() ?>
 <?php endif ?>

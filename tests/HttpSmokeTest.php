@@ -19,6 +19,7 @@ class HttpSmokeTest extends TestCase
         $userId=$db->getLastInsertID();
         $socket=stream_socket_server('tcp://127.0.0.1:0',$errno,$error); self::assertNotFalse($socket,$error); $address=stream_socket_get_name($socket,false); fclose($socket);
         $environment=getenv(); $environment['UM_DB_DSN']='sqlite:'.$dbFile; $environment['UM_RUNTIME_PATH']=$temp;
+        $environment['UM_TEST_EXTERNAL_LAYOUT']='1';
         $pipes=[]; $process=proc_open([PHP_BINARY,'-S',$address,'-t',$root.'/tests/fixtures/app/web',$root.'/tests/fixtures/app/web/router.php'],[['pipe','r'],['file',$temp.'/stdout.log','w'],['file',$temp.'/stderr.log','w']],$pipes,$root,$environment);
         self::assertIsResource($process); fclose($pipes[0]);
         $base='http://'.$address; $cookie=$temp.'/cookies.txt';
@@ -40,9 +41,16 @@ class HttpSmokeTest extends TestCase
             [$code]=$request('/user-management/external-auth/start?provider=google'); self::assertSame(405,$code);
             [$code]=$request('/user-management/external-auth/unlink?provider=google'); self::assertSame(405,$code);
             [$code]=$request('/user-management/external-auth/start?provider=google',[]); self::assertSame(400,$code,'CSRF must protect external sign-in.');
+            [$code,$body]=$request('/user-management/dashboard/index'); self::assertSame(200,$code);
+            self::assertStringContainsString('host-layout',$body);
+            self::assertStringContainsString('dashboard.css',$body);
+            self::assertStringNotContainsString('layout.css',$body);
             [$code,$body]=$request('/site/index'); preg_match('/name="csrf-token" content="([^"]+)"/',$body,$matches); self::assertNotEmpty($matches); $csrf=html_entity_decode($matches[1]);
             $post=function($path,$data) use($request,$csrf): array { return $request($path,['_' . 'csrf'=>$csrf]+$data); };
             [$code]=$post('/user-management/external-auth/start?provider=google', []); self::assertSame(404,$code,'Providers must be disabled by default.');
+            [$code,$body]=$post('/user-management/security/reauthenticate',['password'=>'wrong phrase','code'=>'Samsung']);
+            self::assertSame(200,$code,'Invalid verification values must be shown in the form, not as a 403 page.');
+            self::assertStringContainsString('alert alert-danger',$body);
             foreach([
                 ['/user-management/auth-item-group/create',['AuthItemGroup'=>['code'=>'httpGroup','name'=>'HTTP test group']]],
                 ['/user-management/role/create',['Role'=>['name'=>'HttpRole','description'=>'HTTP role']]],

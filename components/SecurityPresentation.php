@@ -10,6 +10,7 @@ final class SecurityPresentation
     public static function events(): array
     {
         $labels = [
+            'reauth.failed' => 'Identity verification rejected',
             'external.linked' => 'External account linked', 'external.unlinked' => 'External account unlinked',
             'external.login' => 'External sign-in verified', 'external.registered' => 'Account created through an external provider',
             'external.reauthenticated' => 'External account reverified', 'external.failed' => 'External sign-in failed',
