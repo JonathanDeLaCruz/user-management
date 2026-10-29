@@ -51,7 +51,16 @@ class HttpMfaTest extends TestCase
             [$code,$json]=$request('security/passkey-options',['_csrf'=>$token,'operation'=>'register']);self::assertSame(200,$code);
             $options=json_decode($json,true,32,JSON_THROW_ON_ERROR);self::assertSame('required',$options['authenticatorSelection']['userVerification']);
             $authenticator=new VirtualAuthenticator();
-            [$code,$json]=$request('security/passkey-finish',['_csrf'=>$token,'operation'=>'register','name'=>'HTTP passkey','credential'=>json_encode($authenticator->create($options,$origin))]);
+            $registration = $authenticator->create($options, $origin);
+            // Validate the synthetic transcript separately so a fixture/library error has a useful trace.
+            $serializer = \webvimark\modules\UserManagement\components\Passkeys::serializer();
+            $credential = $serializer->deserialize(json_encode($registration), Webauthn\PublicKeyCredential::class, 'json');
+            $creation = $serializer->deserialize(json_encode($options), Webauthn\PublicKeyCredentialCreationOptions::class, 'json');
+            $factory = new Webauthn\CeremonyStep\CeremonyStepManagerFactory();
+            $factory->setAllowedOrigins([$origin], false);
+            $record = (new Webauthn\AuthenticatorAttestationResponseValidator($factory->creationCeremony()))->check($credential->response, $creation, 'localhost');
+            $serializer->serialize($record, 'json');
+            [$code,$json]=$request('security/passkey-finish',['_csrf'=>$token,'operation'=>'register','name'=>'HTTP passkey','credential'=>json_encode($registration)]);
             self::assertSame(200,$code,$json);self::assertArrayHasKey('redirect',json_decode($json,true));
             [$code,$html]=$request('dashboard/index');self::assertSame(200,$code);$token=$csrf($html);
             self::assertSame('passkey',(new yii\db\Query())->select('method')->from('{{%um_session}}')->scalar($db));
