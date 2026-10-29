@@ -108,16 +108,14 @@ final class AuditDisplayQuery
             $text = $row('model.afterUpdate', ['fields' => [$field]]);
             $labels[$field] = mb_substr($text, mb_strlen($prefix), mb_strlen($text) - mb_strlen($prefix) - mb_strlen($suffix));
         }
-        $json = $this->json('[[a.details]]', '$.fields');
-        $safeJson = "CASE WHEN JSON_VALID($json) THEN $json ELSE 'null' END";
-        $safeArray = $this->db->driverName === 'mysql' ? "CASE WHEN JSON_TYPE($json) = 'ARRAY' THEN $json ELSE '[]' END" : "CASE WHEN JSON_TYPE($safeJson) = 'array' THEN $safeJson ELSE '[]' END";
-        if ($this->db->driverName === 'mysql') {
-            $label = $this->map('[[fields.value]]', $labels, 'NULL');
-            $names = "(SELECT GROUP_CONCAT($label ORDER BY [[fields.field_position]] SEPARATOR ', ') FROM JSON_TABLE($safeArray, '$[*]' COLUMNS (field_position FOR ORDINALITY, value VARCHAR(255) PATH '$' NULL ON ERROR)) AS fields)";
-        } else {
-            $label = $this->map('[[fields.value]]', $labels, 'NULL');
-            $names = "(SELECT GROUP_CONCAT($label, ', ') FROM JSON_EACH($safeArray) AS fields)";
+        // Audit::modelChanged records at most these eight allowlisted field names.
+        // Extract individual positions so this also works on MariaDB versions without JSON_TABLE.
+        $parts = [];
+        foreach (array_keys($fields) as $position) {
+            $label = $this->map($this->json('[[a.details]]', '$.fields[' . $position . ']'), $labels, 'NULL');
+            $parts[] = 'COALESCE(' . $this->concat($this->quote(', '), $label) . ", '')";
         }
+        $names = 'NULLIF(SUBSTR(' . $this->concat(...$parts) . ", 3), '')";
         $sql .= " WHEN $event LIKE 'model.%' THEN CASE WHEN $names IS NOT NULL THEN " . $this->concat($this->quote($prefix), $names, $this->quote($suffix)) . ' ELSE ' . $this->quote($row('model.afterUpdate')) . ' END';
         $days = 'COALESCE(' . $this->json('[[a.details]]', '$.days') . ', 0)';
         [$prefix, $suffix] = explode('{days}', UM::t('front', 'Records older than {days} days were removed.', ['days' => '{days}']), 2);
