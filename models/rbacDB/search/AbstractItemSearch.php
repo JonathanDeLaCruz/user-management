@@ -41,6 +41,13 @@ abstract class AbstractItemSearch extends AbstractItem
 				],
 			],
 		]);
+		$sort = $dataProvider->getSort();
+		$table = \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_table;
+		foreach (array_keys($sort->attributes) as $attribute) {
+			$column = $attribute === 'group_code' ? \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_group_table . '.name' : $table . '.' . $attribute;
+			$sort->attributes[$attribute] = ['asc' => [$column => SORT_ASC, $table . '.name' => SORT_ASC],
+				'desc' => [$column => SORT_DESC, $table . '.name' => SORT_DESC]];
+		}
 
 		if (!($this->load($params) && $this->validate())) {
 			return $dataProvider;

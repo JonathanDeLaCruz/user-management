@@ -15,7 +15,7 @@ class AuthItemGroupSearch extends AuthItemGroup
 	public function rules()
 	{
 		return [
-			[['code', 'name', 'created_at', 'updated_at'], 'safe'],
+			[['code', 'name', 'created_at', 'updated_at'], 'string'],
 		];
 	}
 
@@ -38,19 +38,16 @@ class AuthItemGroupSearch extends AuthItemGroup
 				'defaultOrder'=>['created_at'=> SORT_DESC],
 			],
 		]);
+		$sort = $dataProvider->getSort();
+		foreach (array_keys($sort->attributes) as $attribute) {
+			$sort->attributes[$attribute] = ['asc' => [$attribute => SORT_ASC, 'code' => SORT_ASC], 'desc' => [$attribute => SORT_DESC, 'code' => SORT_DESC]];
+		}
 
 		if (!($this->load($params) && $this->validate())) {
 			return $dataProvider;
 		}
 
-		if ( $this->created_at )
-		{
-			$tmp = explode(' - ', $this->created_at);
-			if ( isset($tmp[0], $tmp[1]) )
-			{
-				$query->andFilterWhere(['between',\webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_group_table.'.created_at', strtotime($tmp[0]), strtotime($tmp[1])]);
-			}
-		}
+		foreach (['created_at', 'updated_at'] as $attribute) \webvimark\modules\UserManagement\components\DateFilter::apply($query, $this, $attribute, static::tableName() . '.' . $attribute);
 
 	$query->andFilterWhere(['like', \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_group_table.'.code', $this->code])
 			->andFilterWhere(['like', \webvimark\modules\UserManagement\UserManagementModule::instance()->auth_item_group_table.'.name', $this->name]);

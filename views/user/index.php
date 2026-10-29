@@ -10,7 +10,7 @@ use yii\helpers\Url;
 use yii\widgets\Pjax;
 use webvimark\modules\UserManagement\widgets\GridBulkActions;
 use webvimark\modules\UserManagement\widgets\GridPageSize;
-use yii\grid\GridView;
+use webvimark\modules\UserManagement\widgets\GridView;
 
 /**
  * @var yii\web\View $this
@@ -87,7 +87,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					],
 					[
 						'attribute'=>'email',
-						'format'=>'raw',
+						'format'=>'text',
 						'visible'=>User::hasPermission('viewUserEmail'),
 					],
 					[
@@ -100,9 +100,11 @@ $this->params['breadcrumbs'][] = $this->title;
 						'filter'=>ArrayHelper::map(Role::getAvailableRoles(Yii::$app->user->isSuperAdmin),'name', 'description'),
 						'filterInputOptions'=>['class'=>'form-select', 'prompt'=>UserManagementModule::t('back', 'All')],
 						'value'=>function(User $model){
-								return implode(', ', ArrayHelper::map($model->roles, 'name', 'description'));
+								$descriptions = array_values(ArrayHelper::map($model->roles, 'name', 'description'));
+								sort($descriptions, SORT_STRING);
+								return implode(', ', $descriptions);
 							},
-						'format'=>'raw',
+						'format'=>'text',
 						'visible'=>User::hasPermission('viewUserRoles'),
 					],
 					[

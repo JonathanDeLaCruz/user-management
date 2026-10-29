@@ -19,6 +19,12 @@ class TestSession extends yii\web\Session
 $config = require __DIR__ . '/fixtures/app/config/common.php';
 $config['vendorPath'] = dirname(__DIR__) . '/vendor';
 $config['components']['db']['dsn'] = 'sqlite::memory:';
+// The MariaDB runner creates a disposable, randomly named database before enabling this path.
+if ($gridDsn = getenv('UM_TEST_GRID_DB_DSN')) {
+    if (!preg_match('/;dbname=um_gridcheck_[a-f0-9]{12}$/D', $gridDsn)) throw new RuntimeException('Grid tests require an isolated database.');
+    $config['components']['db'] = ['class' => yii\db\Connection::class, 'dsn' => $gridDsn,
+        'username' => getenv('UM_TEST_DB_USER'), 'password' => getenv('UM_TEST_DB_PASSWORD'), 'tablePrefix' => 'app_'];
+}
 $config['components']['request'] = ['class'=>yii\web\Request::class,'cookieValidationKey'=>'test-key','scriptFile'=>__DIR__.'/fixtures/app/web/index.php','scriptUrl'=>'/index.php','hostInfo'=>'http://localhost','baseUrl'=>'','url'=>'/'];
 $config['components']['urlManager'] = ['enablePrettyUrl'=>true,'showScriptName'=>false];
 $config['components']['session'] = TestSession::class;

@@ -5,7 +5,7 @@ use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\widgets\Pjax;
 use webvimark\modules\UserManagement\widgets\GridPageSize;
-use yii\grid\GridView;
+use webvimark\modules\UserManagement\widgets\GridView;
 
 /**
  * @var yii\web\View $this
@@ -65,7 +65,7 @@ $this->params['breadcrumbs'][] = $this->title;
 							},
 						'format'=>'raw',
 					),
-					'visit_time:datetime',
+					['attribute' => 'visit_time', 'format' => 'datetime', 'filter' => Html::activeInput('date', $searchModel, 'visit_time', ['class' => 'form-control', 'aria-label' => $searchModel->getAttributeLabel('visit_time')])],
 					[
 						'class' => 'webvimark\modules\UserManagement\widgets\ActionColumn',
 						'template'=>'{view}',

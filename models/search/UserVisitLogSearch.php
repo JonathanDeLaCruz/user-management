@@ -17,7 +17,7 @@ class UserVisitLogSearch extends UserVisitLog
 	{
 		return [
 			[['id'], 'integer'],
-			[['token', 'ip', 'language', 'user_id', 'os', 'browser', 'visit_time'], 'safe'],
+			[['token', 'ip', 'language', 'user_id', 'os', 'browser', 'visit_time'], 'string'],
 		];
 	}
 
@@ -48,19 +48,18 @@ class UserVisitLogSearch extends UserVisitLog
 				'defaultOrder'=>['id'=> SORT_DESC],
 			],
 		]);
+		$sort = $dataProvider->getSort();
+		foreach (array_keys($sort->attributes) as $attribute) {
+			$column = $attribute === 'user_id' ? User::tableName() . '.username' : static::tableName() . '.' . $attribute;
+			$sort->attributes[$attribute] = ['asc' => [$column => SORT_ASC, static::tableName() . '.id' => SORT_ASC],
+				'desc' => [$column => SORT_DESC, static::tableName() . '.id' => SORT_DESC]];
+		}
 
 		if (!($this->load($params) && $this->validate())) {
 			return $dataProvider;
 		}
 
-		if ( $this->visit_time )
-		{
-			$tmp = explode(' - ', $this->visit_time);
-			if ( isset($tmp[0], $tmp[1]) )
-			{
-				$query->andFilterWhere(['between', static::tableName() . '.visit_time', strtotime($tmp[0]), strtotime($tmp[1])]);
-			}
-		}
+		\webvimark\modules\UserManagement\components\DateFilter::apply($query, $this, 'visit_time', static::tableName() . '.visit_time');
 
 		$query->andFilterWhere([
 			$this->tableName() . '.id' => $this->id,

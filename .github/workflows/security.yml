@@ -46,4 +46,6 @@ jobs:
           UM_TEST_DB_DSN: mysql:host=127.0.0.1;port=3306;dbname=mysql
           UM_TEST_DB_USER: root
           UM_TEST_DB_PASSWORD: isolated-ci-password
-        run: php tests/MariaDbMigrationCheck.php
+        run: |
+          php tests/MariaDbMigrationCheck.php
+          php tests/MariaDbGridCheck.php
