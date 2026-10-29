@@ -265,6 +265,7 @@ class AuthHelper
 	{
 		foreach ($module->getModules() as $id => $child)
 		{
+			if (isset($module->controllerMap[$id])) continue;
 			if ( ($child = $module->getModule($id)) !== null )
 			{
 				self::getRouteRecursive($child, $result);
@@ -273,12 +274,7 @@ class AuthHelper
 		/* @var $controller \yii\base\Controller */
 		foreach ($module->controllerMap as $id => $value)
 		{
-			$controller = Yii::createObject($value, [
-				$id,
-				$module
-			]);
-			self::getActionRoutes($controller, $result);
-			$result[] = '/' . $controller->uniqueId . '/*';
+			if (self::canDiscoverController($value)) self::discoverController($module, $id, $result);
 		}
 
 		$namespace = trim($module->controllerNamespace, '\\') . '\\';
@@ -292,6 +288,28 @@ class AuthHelper
 		{
 			$result[] = $module->uniqueId . '/*';
 		}
+	}
+
+	/** Inspect known classes before construction; callable/DI factories are checked after resolution. */
+	private static function canDiscoverController($definition): bool
+	{
+		$class = is_array($definition) ? ($definition['class'] ?? null) : $definition;
+		if ($class instanceof \Closure || (is_object($class) && is_callable($class))) return true;
+		if (is_object($class)) return $class instanceof \yii\base\Controller;
+		if (!is_string($class)) return false;
+		if (!class_exists($class)) return Yii::$container->has($class);
+		$reflection = new \ReflectionClass($class);
+		return $reflection->isSubclassOf(\yii\base\Controller::class) && !$reflection->isAbstract() && $reflection->isInstantiable();
+	}
+
+	private static function discoverController($module, string $id, array &$result): void
+	{
+		// The action suffix disambiguates nested controller IDs. No action is created or run.
+		$resolved = $module->createController($id . '/index');
+		if ($resolved === false || !$resolved[0] instanceof \yii\base\Controller) return;
+		$controller = $resolved[0];
+		self::getActionRoutes($controller, $result);
+		$result[] = '/' . $controller->uniqueId . '/*';
 	}
 
 	/**
@@ -341,20 +359,21 @@ class AuthHelper
 				{
 					continue;
 				}
-
 				if ( is_dir($path . '/' . $file) )
 				{
+					$firstId = explode('/', $prefix . $file, 2)[0];
+					if (isset($module->controllerMap[$firstId]) || isset($module->getModules()[$firstId])) continue;
 					self::getControllerRoutes($module, $namespace . $file . '\\', $prefix . $file . '/', $result);
 				}
 				elseif ( strcmp(substr($file, -14), 'Controller.php') === 0 )
 				{
 					$id = Inflector::camel2id(substr(basename($file), 0, -14), '-', true);
 					$className = $namespace . Inflector::id2camel($id) . 'Controller';
-					if ( strpos($className, '-') === false && class_exists($className) && is_subclass_of($className, 'yii\base\Controller') )
+					$firstId = explode('/', $prefix . $id, 2)[0];
+					if (isset($module->controllerMap[$firstId]) || isset($module->getModules()[$firstId])) continue;
+					if ( strpos($className, '-') === false && self::canDiscoverController($className) )
 					{
-						$controller = new $className($prefix . $id, $module);
-						self::getActionRoutes($controller, $result);
-						$result[] = '/' . $controller->uniqueId . '/*';
+						self::discoverController($module, $prefix . $id, $result);
 					}
 				}
 			}

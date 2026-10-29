@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.3.0"
+composer require "joan/user-management:^3.3.1"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -186,6 +186,8 @@ public function behaviors()
 Este ejemplo conserva los filtros de `parent::behaviors()`. Si el controlador ya declara filtros como `AccessControl` o `VerbFilter`, conserva también esas entradas y añade `ghost-access` al mismo array. No declares un segundo método `behaviors()` ni sustituyas el método completo.
 
 Los controladores del módulo ya incluyen este filtro en `components/BaseController.php`; solo debes añadirlo a los de tu aplicación.
+
+El descubrimiento y refresco de rutas utiliza la creación de controladores de Yii, respetando el contenedor de dependencias y `controllerMap`. Admite constructores como el de `SiteController` de Yii Basic con `MailerInterface` y `Security`, omite clases abstractas y archivos que no sean controladores, y no ejecuta acciones durante el recorrido. Conserva las definiciones de dependencias de tu aplicación; no necesitas sobrescribir controladores ni modificar `vendor`.
 
 ## Primeros pasos
 
