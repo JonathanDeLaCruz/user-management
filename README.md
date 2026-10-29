@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.2.2"
+composer require "joan/user-management:^3.3.0"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -26,6 +26,21 @@ El dashboard registra automáticamente sus propios recursos, incluida la gráfic
 Las tablas de usuarios, roles, permisos, grupos, historial de accesos y auditoría incluyen filtros en sus columnas de datos. Pulsa un encabezado para alternar el orden ascendente y descendente. El icono **Limpiar filtros** conserva la ruta, el orden y los parámetros de tu aplicación; cambiar filtros vuelve a la primera página. La auditoría busca sobre los nombres y las descripciones traducidas que muestra, incluidos los usuarios del destino. Su búsqueda general y sus fechas se combinan con los filtros de columna. Los calendarios incluyen el día completo según la zona horaria de la aplicación. En consultas por URL, `visit_time` también admite el rango `AAAA-MM-DD - AAAA-MM-DD`. Usuarios con varios roles se ordenan por la primera descripción alfabética y después por ID, sin duplicar registros. No se requiere configurar la plantilla ni modificar `vendor`.
 
 ## Configuración
+
+### Destino después de iniciar sesión
+
+Configura estas opciones dentro de `modules['user-management']` en `config/web.php` para abrir siempre la página que elijas:
+
+```php
+'afterLoginRoute' => ['/mi-modulo/menu/index', 'category' => 1],
+'respectReturnUrl' => false,
+```
+
+Sustituye la ruta por una de tu aplicación; también se admite una cadena como `'/site/index'`. La ruta se resuelve desde la aplicación y conserva sus parámetros. Se aplica después de completar contraseña y todo MFA requerido, incluidas passkeys, recuperación cuando termina la nueva verificación y Google o Microsoft si están habilitados. Las passkeys entregan el mismo destino en el JSON `redirect`. Visitar login con una sesión ya autenticada utiliza la misma configuración. Vincular cuentas, reautenticarse y administrar factores conserva sus pantallas de seguridad.
+
+Con `respectReturnUrl => true`, se utiliza primero la URL local que Yii haya guardado en la sesión y, si no existe o no es válida, `afterLoginRoute`. Se aceptan rutas locales de retorno; se rechazan URL externas, relativas al protocolo, rutas de login/desafío y otros pasos de autenticación. Un parámetro GET o POST llamado `returnUrl` o `redirect` no configura este destino.
+
+Si omites las opciones, se conserva el comportamiento anterior: login normal respeta el retorno local salvo la página de inicio de la aplicación; MFA, proveedores y sesiones ya autenticadas abren el dashboard. El valor predeterminado de `afterLoginRoute` es `['/user-management/dashboard/index']` y el de `respectReturnUrl` es `null` para conservar esa compatibilidad. Usa `true` o `false` para establecer una política uniforme. `defaultRoute` sigue controlando únicamente la entrada al módulo. No es necesario modificar `vendor` ni sobrescribir controladores.
 
 ### 1. Configuración web
 

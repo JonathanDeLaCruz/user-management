@@ -23,6 +23,7 @@ class HttpMfaTest extends TestCase
         $environment = getenv();
         $environment['UM_DB_DSN']='sqlite:'.$database; $environment['UM_RUNTIME_PATH']=$temp;
         $environment['UM_TEST_MFA_POLICY']='admins'; $environment['UM_WEBAUTHN_ORIGIN']=$origin;
+        $environment['UM_TEST_LOGIN_DESTINATION'] = '1';
         $pipes=[];
         $process=proc_open([PHP_BINARY,'-S','localhost:'.$port,'-t',$root.'/tests/fixtures/app/web',$root.'/tests/fixtures/app/web/router.php'],
             [['pipe','r'],['file',$temp.'/out.log','w'],['file',$temp.'/err.log','w']],$pipes,$root,$environment);
@@ -62,6 +63,7 @@ class HttpMfaTest extends TestCase
             $serializer->serialize($record, 'json');
             [$code,$json]=$request('security/passkey-finish',['_csrf'=>$token,'operation'=>'register','name'=>'HTTP passkey','credential'=>json_encode($registration)]);
             self::assertSame(200,$code,$json);self::assertArrayHasKey('redirect',json_decode($json,true));
+            self::assertSame('/site/index?category=1', json_decode($json, true)['redirect']);
             [$code,$html]=$request('dashboard/index');self::assertSame(200,$code);$token=$csrf($html);
             self::assertSame('passkey',(new yii\db\Query())->select('method')->from('{{%um_session}}')->scalar($db));
             [$code]=$request('auth/logout',['_csrf'=>$token]);self::assertSame(302,$code);
@@ -75,7 +77,13 @@ class HttpMfaTest extends TestCase
             [$code,$json]=$request('security/passkey-options',['_csrf'=>$token,'operation'=>'login']);self::assertSame(200,$code);
             $options=json_decode($json,true,32,JSON_THROW_ON_ERROR);
             [$code,$json]=$request('security/passkey-finish',['_csrf'=>$token,'operation'=>'login','credential'=>json_encode($authenticator->get($options,$origin))]);self::assertSame(200,$code,$json);
-            [$code]=$request('security/index');self::assertSame(200,$code);
+            self::assertSame('/site/index?category=1', json_decode($json, true)['redirect']);
+            [$code,$html]=$request('security/index');self::assertSame(200,$code);$token=$csrf($html);
+            [$code,$json]=$request('security/passkey-options',['_csrf'=>$token,'operation'=>'reauth']);self::assertSame(200,$code);
+            $options=json_decode($json,true,32,JSON_THROW_ON_ERROR);
+            [$code,$json]=$request('security/passkey-finish',['_csrf'=>$token,'operation'=>'reauth','credential'=>json_encode($authenticator->get($options,$origin,2))]);
+            self::assertSame(200,$code,$json);
+            self::assertSame('/user-management/security/index',json_decode($json,true)['redirect'],'Reauthentication must stay in account security.');
         } finally { proc_terminate($process);proc_close($process);$db->close(); }
     }
 }

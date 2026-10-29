@@ -66,7 +66,7 @@ class SecurityController extends BaseController
         if (Yii::$app->request->isPost) {
             $method = Yii::$app->request->post('method');
             $code = (string)Yii::$app->request->post('code', '');
-            if ($method === 'totp' && Security::verifyTotp($user, $code)) return $this->finishLogin($user, 'totp');
+            if ($method === 'totp' && Security::verifyTotp($user, $code)) return $this->redirect($this->finishLogin($user, 'totp'));
             if ($method !== 'recovery' || !Security::recover($user, $code)) {
                 Audit::record('mfa.failed', (string)$user->id);
                 $error = UM::t('front', 'Verification failed. Try again.');
@@ -75,14 +75,14 @@ class SecurityController extends BaseController
         return $this->render('challenge', $this->data($user, ['error' => $error]));
     }
 
-    private function finishLogin(User $user, string $method)
+    private function finishLogin(User $user, string $method): string
     {
         if (Security::recovered($user)) {
             SecuritySessions::revoke($user->id);
             $user->generateAuthKey(); $user->save(false);
         }
         if (!User::component()->completeSecureLogin($user, $method)) throw new ForbiddenHttpException();
-        return $this->redirect(['/user-management/dashboard/index']);
+        return UM::instance()->resolveAfterLoginUrl();
     }
 
     public function actionPasskeyOptions()
@@ -109,10 +109,10 @@ class SecurityController extends BaseController
             return ['error' => UM::t('front', 'Verification failed. Try again.')];
         }
         if (User::component()->isGuest) {
-            $this->finishLogin($user, 'passkey');
+            $destination = $this->finishLogin($user, 'passkey');
             Yii::$app->response->statusCode = 200;
             Yii::$app->response->headers->remove('Location');
-            return ['redirect' => \yii\helpers\Url::to(['/user-management/dashboard/index'])];
+            return ['redirect' => $destination];
         }
         return ['redirect' => \yii\helpers\Url::to(['index'])];
     }
@@ -147,7 +147,7 @@ class SecurityController extends BaseController
     {
         $user = $this->user();
         if (!Security::confirmTotp($user, (string)Yii::$app->request->post('code', ''))) throw new ForbiddenHttpException(UM::t('front', 'Verification failed. Try again.'));
-        if (User::component()->isGuest) return $this->finishLogin($user, 'totp');
+        if (User::component()->isGuest) return $this->redirect($this->finishLogin($user, 'totp'));
         return $this->redirect(['index']);
     }
 

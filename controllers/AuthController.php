@@ -44,7 +44,7 @@ class AuthController extends BaseController
 	{
 		if ( !\webvimark\modules\UserManagement\models\User::component()->isGuest )
 		{
-			return $this->redirect(['/user-management/dashboard/index']);
+			return $this->redirect(UserManagementModule::instance()->resolveAfterLoginUrl());
 		}
 
 		$model = new LoginForm();
@@ -57,10 +57,7 @@ class AuthController extends BaseController
 
 		if ( $model->load(Yii::$app->request->post()) AND $model->login() )
 		{
-			if (User::component()->getReturnUrl() === Yii::$app->homeUrl) {
-				return $this->redirect(['/user-management/dashboard/index']);
-			}
-			return $this->goBack(['/user-management/dashboard/index']);
+			return $this->redirect(UserManagementModule::instance()->resolveAfterLoginUrl(true));
 		}
 
         if ($model->requiresMfa) return $this->redirect(['/user-management/security/challenge']);

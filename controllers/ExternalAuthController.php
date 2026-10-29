@@ -38,8 +38,13 @@ class ExternalAuthController extends Controller
             return $this->redirect(['/user-management/auth/login']);
         }
         try {
-            $destination = (new ExternalAuth())->callback($provider, Yii::$app->request->queryParams);
-            return $this->redirect(['/user-management/' . ['security' => 'security/index', 'mfa' => 'security/challenge', 'dashboard' => 'dashboard/index'][$destination]]);
+            $destination = $this->authClient()->callback($provider, Yii::$app->request->queryParams);
+            return $this->redirect(match ($destination) {
+                'dashboard' => UM::instance()->resolveAfterLoginUrl(),
+                'security' => ['/user-management/security/index'],
+                'mfa' => ['/user-management/security/challenge'],
+                default => throw new \UnexpectedValueException('Unknown authentication outcome.'),
+            });
         } catch (\Throwable $e) {
             Audit::record('external.failed', null, ['provider' => in_array($provider, ['google', 'microsoft'], true) ? $provider : 'unknown']);
             // Never expose provider responses, authorization codes, JWTs or exception traces to the user.
@@ -47,6 +52,8 @@ class ExternalAuthController extends Controller
             return $this->redirect(['/user-management/' . (User::component()->isGuest ? 'auth/login' : 'security/index')]);
         }
     }
+
+    protected function authClient(): ExternalAuth { return new ExternalAuth(); }
 
     public function actionUnlink(string $provider)
     {

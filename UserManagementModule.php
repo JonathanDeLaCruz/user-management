@@ -8,6 +8,15 @@ use yii\helpers\ArrayHelper;
 class UserManagementModule extends \yii\base\Module
 {
     public $defaultRoute = 'dashboard/index';
+    /** Application route, independent of defaultRoute and the current controller. */
+    public $afterLoginRoute = ['/user-management/dashboard/index'];
+    /** true: local return URLs; false: always afterLoginRoute; null: legacy flow behavior. */
+    public $respectReturnUrl = null;
+
+    public function resolveAfterLoginUrl(bool $legacyPasswordLogin = false): string
+    {
+        return components\LoginDestination::resolve($this, $legacyPasswordLogin);
+    }
     /** optional, admins or all. Existing enrolled accounts always require MFA. */
     public $mfaPolicy = 'admins';
     public $mfaRequiredRoles = ['Admin'];
@@ -213,6 +222,9 @@ class UserManagementModule extends \yii\base\Module
 	public function init()
 	{
 		parent::init();
+        if ($this->respectReturnUrl !== null && !is_bool($this->respectReturnUrl)) {
+            throw new \yii\base\InvalidConfigException('respectReturnUrl must be true, false or null.');
+        }
         components\RuntimeRequirements::assertSupported();
         if (!in_array($this->mfaPolicy, ['optional', 'admins', 'all'], true)
             || $this->sessionLifetime < 300 || $this->sessionIdleTimeout < 60) {
