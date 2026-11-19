@@ -7,7 +7,7 @@ Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de c
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.4.0"
+composer require "joan/user-management:^3.4.1"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -389,6 +389,19 @@ $active = SecuritySessions::isActive((int)$user->id, $sessionId);
 Ambos son API pública. `currentId(): string` devuelve el identificador SHA-256 de la sesión de seguridad: **64 caracteres hexadecimales en minúsculas**. No es el ID de la cookie PHP ni un token que permita entrar. Captúralo después del login; por sí solo no prueba que exista una sesión. `isActive(int $userId, string $sessionId): bool` consulta su propietario, revocación, duración máxima, inactividad, estado de la cuenta y huellas de contraseña y `auth_key`, comparadas con `hash_equals`. Devuelve `false` para identificadores inválidos o de otro usuario y no comunica el motivo. No renueva la actividad ni modifica sesiones.
 
 La integración puede consultar esa API cada minuto desde un endpoint autenticado entre servidores. No se agrega un endpoint público que acepte IDs del navegador. Una pestaña abierta o una consulta periódica no prolonga la sesión central por sí sola; la política de actividad real sigue a cargo de la integración.
+
+### Renovar actividad desde un sistema hijo (3.4.1)
+
+```php
+// En el central, después de verificar la firma y la identidad del sistema hijo.
+$renewed = SecuritySessions::touch($centralUserId, $centralSessionId);
+```
+
+`touch(int $userId, string $sessionId): bool` es API pública para la integración entre servidores. Renueva únicamente `last_seen_at` cuando la sesión cumple las mismas condiciones de `isActive()` en ese momento: propietario, cuenta activa, credenciales vigentes, MFA cumplido y límites de inactividad y duración máxima. Devuelve `false` ante datos inválidos, una sesión cerrada o vencida, o un fallo de base de datos, sin comunicar el motivo. No requiere la cookie PHP ni una sesión del usuario en la solicitud actual. Bloquea las filas de cuenta y sesión durante la operación en MariaDB/MySQL; en SQLite un conflicto concurrente cancela la renovación.
+
+No modifica `expires_at`, el método de autenticación ni las credenciales; no reabre sesiones ni genera auditoría o eventos de revocación. Las llamadas repetidas dentro de 60 segundos pueden devolver `true` sin escribir de nuevo, siempre que la sesión siga activa. Si participas en una transacción de tu aplicación, el cambio queda sujeto a su commit o rollback.
+
+Llama a este método solo después de validar la solicitud firmada del hijo y comprobar actividad real, como máximo una vez por minuto. El método no valida firmas ni crea un endpoint y no recibe identidades directamente del navegador. Un heartbeat automático por tener una pestaña abierta no representa actividad. Cuando la persona deja de trabajar, deja de renovar; el central conserva `sessionIdleTimeout` y `sessionLifetime`, y el hijo conserva su propio límite de inactividad. `isActive()` y `valid()` mantienen su comportamiento anterior. Esta actualización no requiere migraciones adicionales a 3.4.0.
 
 ### Recibir cierres de sesión
 
