@@ -76,6 +76,8 @@ final class ReauthenticationTest extends TestCase
     {
         $this->module->maxAttempts = 1;
         $this->attempt(['password' => 'wrong phrase', 'code' => $this->otp->at(time() + 30)]);
+        // The form must remain locked even if the failed request crossed a rate-limit window boundary.
+        $this->module->maxAttempts = 0;
         $html = $this->attempt(['password' => 'A reauthentication phrase', 'code' => $this->otp->at(time() + 30)]);
         self::assertIsString($html); self::assertStringContainsString('Demasiados intentos', $html);
         self::assertFalse(Security::recent($this->user));

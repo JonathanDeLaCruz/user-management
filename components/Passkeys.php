@@ -42,6 +42,7 @@ final class Passkeys
 
     public static function options(User $user, string $operation): array
     {
+        AccountSecurity::assertLocal($user);
         if (!in_array($operation, ['register', 'login', 'reauth'], true)) throw new ForbiddenHttpException();
         AccountSecurity::rate($user, 'passkey-options');
         if ($operation === 'register' && !AccountSecurity::mayEnroll($user)) throw new ForbiddenHttpException();
@@ -79,6 +80,7 @@ final class Passkeys
 
     public static function verify(User $user, string $operation, array $data, string $name = ''): void
     {
+        AccountSecurity::assertLocal($user);
         AccountSecurity::rate($user, 'passkey');
         $state = Yii::$app->session->remove('um_ceremony'); // Challenges are single-use, including failures.
         if (!is_array($state) || ($state['user'] ?? null) !== $user->id || ($state['operation'] ?? '') !== $operation

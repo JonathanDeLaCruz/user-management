@@ -85,6 +85,10 @@ $this->params['breadcrumbs'][] = $this->title;
 							},
 						'format'=>'raw',
 					],
+                    ['attribute' => 'auth_source', 'label' => UserManagementModule::t('front', 'Account source'),
+                        'filter' => ['local' => UserManagementModule::t('front', 'Local account'), 'central' => UserManagementModule::t('front', 'Central system account')],
+                        'filterInputOptions' => ['class' => 'form-select', 'prompt' => UserManagementModule::t('back', 'All')],
+                        'value' => fn(User $model) => UserManagementModule::t('front', $model->isExternal() ? 'Central system account' : 'Local account')],
 					[
 						'attribute'=>'email',
 						'format'=>'text',
@@ -130,6 +134,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					],
 					[
 						'value'=>function(User $model){
+                                if (!$model->localCredentialsAllowed()) return '';
 								return GhostHtml::a(
 									UserManagementModule::t('back', 'Change password'),
 									['change-password', 'id'=>$model->id],

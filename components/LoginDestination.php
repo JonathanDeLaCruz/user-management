@@ -20,18 +20,18 @@ final class LoginDestination
             throw new InvalidConfigException('afterLoginRoute must be an absolute application route, optionally followed by route parameters.');
         }
         $fallback = Url::toRoute($route);
-        if (!self::local($fallback, $module)) throw new InvalidConfigException('afterLoginRoute must resolve to a local page outside the authentication flow.');
+        if (!self::isLocal($fallback, $module)) throw new InvalidConfigException('afterLoginRoute must resolve to a local page outside the authentication flow.');
         if ($module->respectReturnUrl ?? $legacyPasswordLogin) {
             // Read only Yii's server-side return URL; never a request's returnUrl/redirect parameter.
             $stored = Yii::$app->session->get(User::component()->returnUrlParam);
             try { $return = is_string($stored) || (is_array($stored) && isset($stored[0]) && is_string($stored[0])) ? User::component()->getReturnUrl() : null; }
             catch (\yii\base\InvalidArgumentException|\TypeError $error) { $return = null; }
-            if (($module->respectReturnUrl !== null || $return !== Yii::$app->homeUrl) && self::local($return, $module)) return $return;
+            if (($module->respectReturnUrl !== null || $return !== Yii::$app->homeUrl) && self::isLocal($return, $module)) return $return;
         }
         return $fallback;
     }
 
-    private static function local($url, UM $module): bool
+    public static function isLocal($url, UM $module): bool
     {
         // Root-relative URLs work without trusting Host or forwarded headers for a same-origin check.
         if (!is_string($url) || $url === '' || !str_starts_with($url, '/') || str_starts_with($url, '//')
@@ -46,7 +46,7 @@ final class LoginDestination
         parse_str($parts['query'] ?? '', $query);
         $request = new class extends Request { public function getMethod() { return 'GET'; } };
         $source = Yii::$app->request;
-        $request->setHostInfo($source->getHostInfo());
+        $request->setHostInfo('http://localhost');
         $request->setScriptUrl($source->getScriptUrl());
         $request->setBaseUrl($source->getBaseUrl());
         $request->setUrl($url);

@@ -35,6 +35,8 @@ class UserConfig extends User
     protected function beforeLogin($identity, $cookieBased, $duration)
     {
         if ($cookieBased) return false;
+        if (!\webvimark\modules\UserManagement\models\User::findIdentity($identity->getId())) return false;
+        if (\webvimark\modules\UserManagement\UserManagementModule::instance()->localAuthentication && $identity->isExternal()) return false;
         if (!AccountSecurity::ipAllowed($identity)) return false;
         if (AccountSecurity::requiresMfa($identity) && ($cookieBased || !in_array($this->verifiedMethod, AccountSecurity::strict($identity) ? ['passkey'] : ['passkey', 'totp'], true))) return false;
         return parent::beforeLogin($identity, $cookieBased, $duration);
@@ -50,7 +52,7 @@ class UserConfig extends User
     protected function beforeLogout($identity)
     {
         if (!parent::beforeLogout($identity)) return false;
-        if ($this->enableSession) SecuritySessions::revoke((int)$identity->getId(), SecuritySessions::currentId());
+        if ($this->enableSession) SecuritySessions::revoke((int)$identity->getId(), SecuritySessions::currentId(), false, 'logout');
         foreach (['um_pending_login', 'um_ceremony', 'um_recovered_user', 'um_security_verified', 'um_totp_setup', 'um_session_token', 'um_external_flow', 'um_external_reauth'] as $key) Yii::$app->session->remove($key);
         return true;
     }
@@ -97,11 +99,23 @@ class UserConfig extends User
 	 */
 	protected function afterLogin($identity, $cookieBased, $duration)
 	{
-        SecuritySessions::start($identity, $this->verifiedMethod ?? 'password');
+        SecuritySessions::start($identity, \webvimark\modules\UserManagement\UserManagementModule::instance()->localAuthentication ? ($this->verifiedMethod ?? 'password') : 'central');
         foreach (['um_pending_login', 'um_ceremony', 'um_recovered_user', 'um_totp_setup'] as $key) Yii::$app->session->remove($key);
 		AuthHelper::updatePermissions($identity);
 
 		parent::afterLogin($identity, $cookieBased, $duration);
 	}
+
+    public function loginRequired($checkAjax = true, $checkAcceptHeader = true)
+    {
+        // Yii normally stores getAbsoluteUrl(), which incorporates the untrusted Host header.
+        $request = Yii::$app->request;
+        $store = $this->enableSession && $request->isGet && (!$checkAjax || !$request->isAjax)
+            && (!$checkAcceptHeader || $this->checkRedirectAcceptable());
+        try { return parent::loginRequired($checkAjax, $checkAcceptHeader); }
+        finally {
+            if ($store) $this->setReturnUrl(LoginDestination::isLocal($request->url, \webvimark\modules\UserManagement\UserManagementModule::instance()) ? $request->url : null);
+        }
+    }
 
 }

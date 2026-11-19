@@ -1,13 +1,13 @@
 # Gestión de usuarios para Yii 2
 
-Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña, passkeys, MFA, sesiones y auditoría. PHP 8.2–8.5 actualizado, Yii 2.0.55+ y Bootstrap 5.
+Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña, passkeys, MFA, sesiones y auditoría. PHP 8.2–8.6 actualizado, Yii 2.0.55+ y Bootstrap 5.
 
 ## Instalación
 
 Instala la versión estable desde [Packagist](https://packagist.org/packages/joan/user-management):
 
 ```bash
-composer require "joan/user-management:^3.3.1"
+composer require "joan/user-management:^3.4.0"
 ```
 
 El paquete se instala en `vendor/joan/user-management`. Si utilizabas otro nombre de este paquete, elimina esa dependencia con `composer remove nombre/anterior --no-update` antes de instalarlo. Se conservan el namespace PHP, las rutas, las claves MFA y las tablas existentes; no necesitas recrear cuentas ni registrar de nuevo sus factores.
@@ -348,11 +348,92 @@ php yii user-management/security/cleanup 90
 
 Las nuevas tablas son `um_mfa`, `um_passkey`, `um_recovery_code`, `um_session` y `um_audit_log`; respetan `tablePrefix`. Aplica las migraciones antes de atender peticiones con esta versión. En una actualización, configura la clave de cifrado antes de que los administradores inicien sesión; configura también el origen si utilizarás passkeys. En instalaciones que ya exigen passkeys, conserva explícitamente `requirePhishingResistant => true` para mantener esa política.
 
+## Sistema central y sistemas hijos (3.4.0)
+
+En el central conserva `localAuthentication => true` (valor predeterminado). Mantiene los controles de contraseña, MFA, CSRF, permisos y bloqueo de intentos existentes.
+
+En cada hijo, dentro de `modules['user-management']`:
+
+```php
+'localAuthentication' => false,
+```
+
+Configura también `components['user']['loginUrl']` con la ruta de entrada al central que gestione tu integración. El módulo responde **404** en las rutas de autenticación local: contraseña, registro, recuperación, confirmación de correo, MFA, passkeys y Google/Microsoft; oculta sus controles. Conserva administración, auditoría, sesiones activas y logout por POST con sus permisos habituales. La lista de acciones permitidas de seguridad es cerrada: las nuevas acciones de autenticación de esos controladores también quedan bloqueadas.
+
+Tras verificar en el servidor la identidad y el MFA del central, tu integración puede provisionar una cuenta y abrir la sesión local:
+
+```php
+use webvimark\modules\UserManagement\models\User;
+
+// Solo para una identidad del central ya validada por tu integración.
+$user = User::createExternal('nombre-de-usuario', 'usuario@example.com');
+User::assignRole($user->id, 'Docente'); // El rol debe existir y sus permisos los define este hijo.
+Yii::$app->user->login($user);
+```
+
+`createExternal(string $username, ?string $email = null): User` crea una cuenta activa con `auth_source = 'central'`, sin contraseña utilizable, sin factores ni roles automáticos. Rechaza nombres duplicados; no vincula cuentas existentes por coincidencia de email o username. Conserva en tu integración una asociación estable entre el identificador verificado del central y el ID local. Para vincular una cuenta local existente, no cambies su origen: resuelve explícitamente su propiedad y la política de migración en tu aplicación.
+
+Las cuentas del central no admiten contraseña vacía ni ninguna otra, asignación de contraseña, recuperación local, inscripción MFA/passkeys ni vinculaciones Google/Microsoft. El origen de una cuenta guardada es inmutable mediante el modelo, incluso desde consola o actualizaciones masivas. Se identifican como **Cuenta del sistema central** en Usuarios y mantienen la administración de estado, roles y permisos. Las cuentas locales anteriores conservan `auth_source = 'local'`.
+
+Con `localAuthentication => false`, `Yii::$app->user->login()` registra una sesión con método `central`, sin exigir MFA local. El código que llama a ese método es responsable de validar la autenticación del central; no lo invoques con una identidad tomada directamente de parámetros del navegador. Reactivar la autenticación local vuelve a aplicar la política MFA y no permite reutilizar sesiones del modo central.
+
+### Consultar la sesión del central
+
+```php
+use webvimark\modules\UserManagement\components\SecuritySessions;
+
+$sessionId = SecuritySessions::currentId();
+$active = SecuritySessions::isActive((int)$user->id, $sessionId);
+```
+
+Ambos son API pública. `currentId(): string` devuelve el identificador SHA-256 de la sesión de seguridad: **64 caracteres hexadecimales en minúsculas**. No es el ID de la cookie PHP ni un token que permita entrar. Captúralo después del login; por sí solo no prueba que exista una sesión. `isActive(int $userId, string $sessionId): bool` consulta su propietario, revocación, duración máxima, inactividad, estado de la cuenta y huellas de contraseña y `auth_key`, comparadas con `hash_equals`. Devuelve `false` para identificadores inválidos o de otro usuario y no comunica el motivo. No renueva la actividad ni modifica sesiones.
+
+La integración puede consultar esa API cada minuto desde un endpoint autenticado entre servidores. No se agrega un endpoint público que acepte IDs del navegador. Una pestaña abierta o una consulta periódica no prolonga la sesión central por sí sola; la política de actividad real sigue a cargo de la integración.
+
+### Recibir cierres de sesión
+
+Registra el listener durante el bootstrap de la aplicación central, antes de procesar solicitudes o comandos:
+
+```php
+use yii\base\Event;
+use webvimark\modules\UserManagement\components\SecuritySessions;
+use webvimark\modules\UserManagement\components\SessionsRevokedEvent;
+
+Event::on(SecuritySessions::class, SecuritySessions::EVENT_SESSIONS_REVOKED,
+    static function (SessionsRevokedEvent $event): void {
+        // Encolar en tu integración el aviso autenticado a los sistemas hijos.
+        // $event->userId: int
+        // $event->sessionIds: string[] de identificadores cerrados
+        // $event->reason: uno de los motivos documentados abajo
+    }
+);
+```
+
+El evento incluye únicamente `userId`, `sessionIds` y `reason` (más los campos estándar de un evento Yii). No contiene cookies, tokens, contraseñas, hashes ni claves. Los motivos son:
+
+| Motivo | Operación |
+| --- | --- |
+| `logout` | Cierre normal de la sesión actual |
+| `revoked` | Revocación de una sesión o revocación general explícita |
+| `revoked-others` | Cerrar las demás sesiones |
+| `password-changed` | Cambio o restablecimiento de contraseña |
+| `account-disabled` | Cuenta desactivada o bloqueada |
+| `account-deleted` | Eliminación de cuenta |
+| `mfa-reset` | Restablecimiento de factores por un operador |
+
+Se emite una vez por operación que realmente cierre sesiones, después del commit de la transacción exterior. No se emite por sesiones ya cerradas ni por cambios revertidos, incluso con savepoints. Un listener que lance una excepción no revierte la revocación: se registra un error sin su mensaje ni argumentos. Tu listener debe encolar el trabajo y gestionar reintentos de entrega; el evento no es por sí mismo un servicio de webhooks. Conserva además la comprobación periódica para detectar expiraciones, cookies desaparecidas y cierres que ocurran fuera del módulo. Cerrar sesión en un hijo solo revoca su sesión local; tu integración no debe convertirlo en un cierre global.
+
+`SecuritySessions::revoke(int $userId, ?string $id = null, bool $exceptCurrent = false, ?string $reason = null): void` conserva sus tres argumentos originales. El cuarto permite indicar uno de los motivos anteriores. Si se omite, usa `revoked` o `revoked-others` según corresponda.
+
+Aplica la migración incremental `m261119_000000_add_central_accounts` antes de atender solicitudes: añade `um_user.auth_source`, la huella de contraseña en `um_session` y `um_session_revocation`. Esta última guarda marcadores transitorios para emitir eventos solo tras confirmar la transacción, sin guardar credenciales. Las sesiones anteriores conservan sus vencimientos y reciben su huella durante la actualización. No se modifican migraciones publicadas. La creación de cuentas centrales, las revocaciones y los cambios observados de `localAuthentication` quedan en auditoría; estos últimos se registran en la siguiente solicitud web al módulo, una vez por aplicación y cambio.
+
+Las URLs guardadas al enviar al login son relativas (`/ruta?parametros`), sin confiar en `Host`. `respectReturnUrl` mantiene sus opciones y sigue rechazando destinos externos y bucles de autenticación.
+
 ## PHP y comprobaciones
 
-Se requieren como mínimo PHP **8.2.35, 8.3.36, 8.4.27 o 8.5.12**, que contienen las correcciones críticas de octubre de 2026. En Windows utiliza los builds **`-1` o posteriores**, que incorporan también la corrección de Brotli. Actualiza tanto PHP de consola como el del servidor web; Composer comprueba la versión del PHP que lo ejecuta. [Avisos oficiales de PHP](https://www.php.net/archive/2026.php).
+Se requieren como mínimo PHP **8.2.36, 8.3.37, 8.4.28, 8.5.13 o 8.6.0**, publicados el 19 de noviembre de 2026. En Windows utiliza builds oficiales actualizados, con Brotli **1.2.1 o posterior** si cargas cURL. Actualiza tanto PHP de consola como el del servidor web; Composer comprueba la versión del PHP que lo ejecuta. [Avisos oficiales de PHP](https://www.php.net/archive/2026.php).
 
-Las pruebas usan credenciales ficticias para verificar firmas WebAuthn, rechazo de orígenes falsos, desafíos y códigos reutilizados, política MFA, sesiones y migraciones. GitHub Actions las ejecuta en PHP 8.2–8.5 y comprueba instalaciones y actualizaciones en MariaDB. `tests/` y `.github/` están excluidos de la distribución Composer.
+Las pruebas usan credenciales ficticias para verificar firmas WebAuthn, rechazo de orígenes falsos, desafíos y códigos reutilizados, política MFA, sesiones y migraciones. GitHub Actions las ejecuta en PHP 8.2–8.6 y comprueba instalaciones y actualizaciones en MariaDB. `tests/` y `.github/` están excluidos de la distribución Composer.
 
 Para ejecutar las pruebas desde una copia Git del repositorio:
 

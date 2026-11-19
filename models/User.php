@@ -29,18 +29,61 @@ use yii\behaviors\TimestampBehavior;
  */
 class User extends UserIdentity
 {
+    private bool $creatingExternal = false;
+
+    public function transactions()
+    {
+        return array_fill_keys(array_keys($this->scenarios()), self::OP_ALL);
+    }
+
+    /** Central identities are immutable credential-less accounts, provisioned by trusted server code. */
+    public function isExternal(): bool
+    {
+        if ($this->auth_source === 'central' || $this->getOldAttribute('auth_source') === 'central') return true;
+        if ($this->getOldAttribute('auth_source') === 'local') return false;
+        return !$this->isNewRecord && static::find()->where(['id' => $this->id, 'auth_source' => 'central'])->exists();
+    }
+
+    public static function createExternal(string $username, ?string $email = null): self
+    {
+        $user = new static(['username' => $username, 'email' => $email, 'status' => self::STATUS_ACTIVE]);
+        $user->creatingExternal = true;
+        $user->auth_source = 'central';
+        $user->password_hash = '!'; // Explicitly invalid hash, never an empty or generated local password.
+        if (!$user->save()) throw new \yii\base\InvalidArgumentException('The central account could not be created. Check username and email.');
+        return $user;
+    }
+
+    public static function updateAll($attributes, $condition = '', $params = [])
+    {
+        if (array_key_exists('auth_source', $attributes)) throw new \yii\base\InvalidArgumentException('The authentication source is immutable.');
+        if ((array_key_exists('password_hash', $attributes) || !empty($attributes['confirmation_token']))
+            && static::find()->where($condition, $params)->andWhere(['auth_source' => 'central'])->exists()) {
+            throw new \yii\base\InvalidArgumentException('Central accounts cannot have local credentials.');
+        }
+        return parent::updateAll($attributes, $condition, $params);
+    }
+
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
         if (!$insert && array_key_exists('password_hash', $changedAttributes)) {
-            \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id);
+            \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id, null, false, 'password-changed');
             \webvimark\modules\UserManagement\components\AccountSecurity::notify($this, 'Password changed');
         }
+        elseif (!$insert && array_key_exists('status', $changedAttributes) && (int)$this->status !== self::STATUS_ACTIVE) {
+            \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id, null, false, 'account-disabled');
+        }
+        elseif (!$insert && array_key_exists('auth_key', $changedAttributes)) {
+            \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id);
+        }
+        if ($insert && $this->isExternal()) \webvimark\modules\UserManagement\components\Audit::record('account.central_created', (string)$this->id);
     }
 
     public function afterDelete()
     {
         parent::afterDelete();
+        \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->id, null, false, 'account-deleted');
         foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_external_identity'] as $table) {
             if (Yii::$app->db->getTableSchema('{{%' . $table . '}}')) Yii::$app->db->createCommand()->delete('{{%' . $table . '}}', ['user_id' => $this->id])->execute();
         }
@@ -359,6 +402,15 @@ class User extends UserIdentity
 	 */
 	public function beforeSave($insert)
 	{
+        if ($insert && $this->auth_source === null) $this->auth_source = 'local';
+        if ((!$insert && $this->isAttributeChanged('auth_source'))
+            || ($insert && $this->auth_source !== 'local' && !$this->creatingExternal)) {
+            throw new \yii\base\InvalidArgumentException('Use createExternal() for central accounts; the authentication source is immutable.');
+        }
+        if ($this->isExternal() && (($this->password !== null && $this->password !== '')
+            || (!$insert && $this->isAttributeChanged('password_hash')) || $this->password_hash !== '!' || $this->confirmation_token)) {
+            throw new \yii\base\InvalidArgumentException('Central accounts cannot have local credentials.');
+        }
 		if ( $insert )
 		{
 			if ( php_sapi_name() != 'cli' )

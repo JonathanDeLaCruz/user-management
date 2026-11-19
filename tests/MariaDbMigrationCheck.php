@@ -46,6 +46,23 @@ try {
         'auth_key'=>'existing-key', 'created_at'=>1, 'updated_at'=>1, 'confirmation_token'=>$token,
     ])->execute();
     Yii::$app->db->createCommand()->insert($module->auth_assignment_table, ['item_name'=>'Admin','user_id'=>990])->execute();
+    // Simulate a populated 3.3.1 installation before the new incremental migration.
+    Yii::$app->db->createCommand()->dropColumn($module->user_table, 'auth_source')->execute();
+    Yii::$app->db->createCommand()->dropColumn('{{%um_session}}', 'password_digest')->execute();
+    Yii::$app->db->createCommand()->dropTable('{{%um_session_revocation}}')->execute();
+    $sessionId = str_repeat('b', 64);
+    Yii::$app->db->createCommand()->insert('{{%um_session}}', ['id' => $sessionId, 'user_id' => 990,
+        'auth_key_hash' => hash('sha256', 'existing-key'), 'method' => 'totp', 'created_at' => time(),
+        'last_seen_at' => time(), 'expires_at' => time() + 300])->execute();
+    Yii::$app->db->schema->refresh();
+    ob_start();
+    try { (new m261119_000000_add_central_accounts(['db' => Yii::$app->db]))->up(); }
+    finally { ob_end_clean(); }
+    $session = (new yii\db\Query())->from('{{%um_session}}')->where(['id' => $sessionId])->one();
+    $source = (new yii\db\Query())->select('auth_source')->from($module->user_table)->where(['id' => 990])->scalar();
+    if ($source !== 'local' || $session['password_digest'] !== hash('sha256', 'existing-hash') || $session['revoked_at'] !== null)
+        throw new RuntimeException('Central-account upgrade did not preserve existing accounts and sessions.');
+    echo 'OK actualización incremental desde 3.3.1 con cuentas y sesiones existentes', PHP_EOL;
     $tables = ['user', 'user_visit_log', 'auth_rule', 'auth_item', 'auth_item_group', 'auth_item_child', 'auth_assignment'];
     foreach ($tables as $table) Yii::$app->db->createCommand()->renameTable('{{%um_' . $table . '}}', '{{%' . $table . '}}')->execute();
     Yii::$app->db->schema->refresh();

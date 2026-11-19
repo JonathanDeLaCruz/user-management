@@ -66,7 +66,7 @@ class ChangeOwnPasswordForm extends Model
 			return false;
 		}
 
-		if ( !Yii::$app->security->validatePassword($this->current_password, $this->user->password_hash) )
+		if ( !$this->user->validatePassword($this->current_password) )
 		{
 			$this->addError('current_password', UserManagementModule::t('back', "Wrong password"));
 		}
@@ -79,6 +79,7 @@ class ChangeOwnPasswordForm extends Model
 	 */
 	public function changePassword($performValidation = true)
 	{
+        if (!$this->user->localCredentialsAllowed()) return false;
 		if ( $performValidation AND !$this->validate() )
 		{
 			return false;
@@ -91,7 +92,7 @@ class ChangeOwnPasswordForm extends Model
 			$this->user->generateAuthKey();
             $changed = User::updateAll(['password_hash'=>$this->user->password_hash, 'auth_key'=>$this->user->auth_key, 'confirmation_token'=>null, 'updated_at'=>time()], ['id'=>$this->user->id, 'confirmation_token'=>$expectedToken]) === 1;
             if ($changed) {
-                \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->user->id);
+                \webvimark\modules\UserManagement\components\SecuritySessions::revoke((int)$this->user->id, null, false, 'password-changed');
                 \webvimark\modules\UserManagement\components\AccountSecurity::notify($this->user, 'Password changed');
             }
             return $changed;

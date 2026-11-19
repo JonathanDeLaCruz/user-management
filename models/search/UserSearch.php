@@ -16,7 +16,7 @@ class UserSearch extends User
 	{
 		return [
 			[['id', 'superadmin', 'status', 'created_at', 'updated_at', 'email_confirmed'], 'integer'],
-			[['username', 'gridRoleSearch', 'registration_ip', 'email'], 'string'],
+			[['username', 'gridRoleSearch', 'registration_ip', 'email', 'auth_source'], 'string'],
 		];
 	}
 
@@ -29,6 +29,7 @@ class UserSearch extends User
 	public function search($params)
 	{
 		$query = User::find();
+        $this->auth_source = null;
 
 		$query->with(['roles']);
 		$module = \webvimark\modules\UserManagement\UserManagementModule::instance();
@@ -82,6 +83,7 @@ class UserSearch extends User
 			'created_at' => $this->created_at,
 			'updated_at' => $this->updated_at,
 			'email_confirmed' => $this->email_confirmed,
+            'auth_source' => $this->auth_source,
 		]);
 
 	$query->andFilterWhere(['like', 'username', $this->username])

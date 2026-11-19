@@ -53,6 +53,7 @@ class UserController extends AdminDefaultController
 			throw new NotFoundHttpException('User not found');
 		}
 
+        if (!$model->localCredentialsAllowed()) throw new NotFoundHttpException();
 		$model->scenario = 'changePassword';
 
 		if ( $model->load(Yii::$app->request->post()) && $model->save() )

@@ -96,7 +96,7 @@ final class AuditDisplayQuery
         foreach (['google', 'microsoft'] as $provider) $providers[$provider] = $row('external.login', ['provider' => $provider]);
         $sql .= " WHEN $event LIKE 'external.%' THEN " . $this->map($this->json('[[a.details]]', '$.provider'), $providers, $this->quote($row('external.login')));
         $methods = [];
-        foreach (['password', 'totp', 'passkey', 'google', 'microsoft'] as $method) $methods[$method] = $row('session.started', ['method' => $method]);
+        foreach (['password', 'totp', 'passkey', 'google', 'microsoft', 'central'] as $method) $methods[$method] = $row('session.started', ['method' => $method]);
         $sql .= " WHEN $event = 'session.started' THEN " . $this->map($this->json('[[a.details]]', '$.method'), $methods, $this->quote($row('session.started')));
 
         // Preserve the order of the allowlisted field names, without exposing raw JSON or secrets.

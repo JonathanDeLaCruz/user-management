@@ -12,6 +12,30 @@ class UserManagementModule extends \yii\base\Module
     public $afterLoginRoute = ['/user-management/dashboard/index'];
     /** true: local return URLs; false: always afterLoginRoute; null: legacy flow behavior. */
     public $respectReturnUrl = null;
+    /** false: authentication is owned by a trusted central application, not this module. */
+    public $localAuthentication = true;
+
+    public function beforeAction($action)
+    {
+        if (Yii::$app instanceof \yii\web\Application) components\Audit::authenticationMode($this->localAuthentication);
+        $controller = $action->controller;
+        $identity = Yii::$app instanceof \yii\web\Application ? Yii::$app->user->getIdentity(false) : null;
+        $local = $this->localAuthentication && !($identity instanceof models\User && $identity->isExternal());
+        if (!$local) {
+            // Fail closed for future authentication controllers, not just today's route names.
+            $allowed = match (true) {
+                $controller instanceof controllers\AuthController => $action->id === 'logout',
+                $controller instanceof controllers\SecurityController => in_array($action->id, ['index', 'audit', 'revoke-session'], true),
+                $controller instanceof controllers\UserController => $action->id !== 'change-password',
+                $controller instanceof components\AdminDefaultController,
+                $controller instanceof controllers\DashboardController,
+                $controller instanceof controllers\UserPermissionController => true,
+                default => false,
+            };
+            if (!$allowed) throw new \yii\web\NotFoundHttpException();
+        }
+        return parent::beforeAction($action);
+    }
 
     public function resolveAfterLoginUrl(bool $legacyPasswordLogin = false): string
     {
@@ -222,6 +246,7 @@ class UserManagementModule extends \yii\base\Module
 	public function init()
 	{
 		parent::init();
+        if (!is_bool($this->localAuthentication)) throw new \yii\base\InvalidConfigException('localAuthentication must be true or false.');
         if ($this->respectReturnUrl !== null && !is_bool($this->respectReturnUrl)) {
             throw new \yii\base\InvalidConfigException('respectReturnUrl must be true, false or null.');
         }

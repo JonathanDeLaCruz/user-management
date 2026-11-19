@@ -10,6 +10,11 @@ use webvimark\modules\UserManagement\UserManagementModule as UM;
 
 final class AccountSecurity
 {
+    public static function assertLocal(User $user): void
+    {
+        if (!$user->localCredentialsAllowed()) throw new \yii\web\NotFoundHttpException();
+    }
+
     public static function profile(User $user): array
     {
         $query = (new Query())->from('{{%um_mfa}}')->where(['user_id' => $user->id]);
@@ -31,6 +36,7 @@ final class AccountSecurity
     public static function policyRequires(User $user): bool
     {
         $module = UM::instance();
+        if (!$module->localAuthentication || $user->isExternal()) return false;
         if ($module->mfaPolicy === 'all') return true;
         if ($module->mfaPolicy !== 'admins') return false;
         if ((int)$user->superadmin === 1) return true;
@@ -53,11 +59,12 @@ final class AccountSecurity
 
     public static function requiresMfa(User $user): bool
     {
-        return self::policyRequires($user) || self::enrolled($user);
+        return $user->localCredentialsAllowed() && (self::policyRequires($user) || self::enrolled($user));
     }
 
     public static function begin(User $user): void
     {
+        self::assertLocal($user);
         Yii::$app->session->regenerateID(true);
         Yii::$app->session->set('um_pending_login', [
             'user' => $user->id, 'key' => hash('sha256', $user->auth_key), 'expires' => time() + 300,
@@ -68,9 +75,10 @@ final class AccountSecurity
 
     public static function pending(): ?User
     {
+        if (!UM::instance()->localAuthentication) return null;
         $state = Yii::$app->session->get('um_pending_login');
         $user = is_array($state) && ($state['expires'] ?? 0) >= time() ? User::findIdentity($state['user'] ?? null) : null;
-        if (!$user || !hash_equals($state['key'], hash('sha256', $user->auth_key)) || !self::ipAllowed($user)) {
+        if (!$user || !$user->localCredentialsAllowed() || !hash_equals($state['key'], hash('sha256', $user->auth_key)) || !self::ipAllowed($user)) {
             Yii::$app->session->remove('um_pending_login');
             return null;
         }
@@ -96,6 +104,7 @@ final class AccountSecurity
 
     public static function recent(User $user): bool
     {
+        if (!UM::instance()->localAuthentication) return SecuritySessions::isActive((int)$user->id, SecuritySessions::currentId());
         $state = Yii::$app->session->get('um_security_verified', []);
         return ($state['at'] ?? 0) >= time() - 300 && hash_equals(hash('sha256', $user->auth_key), $state['key'] ?? '')
             && (!self::requiresMfa($user) || in_array($state['method'] ?? '', self::strict($user) ? ['passkey'] : ['passkey', 'totp'], true));
@@ -104,7 +113,7 @@ final class AccountSecurity
     public static function mayEnroll(User $user): bool
     {
         // A password-only pending session can enroll only when no factor exists yet.
-        return self::recent($user) || self::recovered($user) || (User::component()->isGuest && self::pending()?->id === $user->id && !self::enrolled($user));
+        return $user->localCredentialsAllowed() && (self::recent($user) || self::recovered($user) || (User::component()->isGuest && self::pending()?->id === $user->id && !self::enrolled($user)));
     }
 
     private static function key(): string
@@ -129,6 +138,7 @@ final class AccountSecurity
 
     public static function totpSetup(User $user): TOTP
     {
+        self::assertLocal($user);
         if (self::strict($user) || !self::mayEnroll($user)) throw new ForbiddenHttpException();
         $otp = TOTP::generate();
         $otp->setIssuer(Yii::$app->name);
@@ -151,6 +161,7 @@ final class AccountSecurity
 
     public static function confirmTotp(User $user, string $code): bool
     {
+        if (!$user->localCredentialsAllowed()) return false;
         self::rate($user, 'totp-setup');
         if (self::strict($user) || !self::mayEnroll($user)) return false;
         $state = Yii::$app->session->get('um_totp_setup', []);
@@ -168,6 +179,7 @@ final class AccountSecurity
 
     public static function verifyTotp(User $user, string $code): bool
     {
+        if (!$user->localCredentialsAllowed()) return false;
         self::rate($user, 'totp');
         if (self::strict($user)) return false;
         $row = self::profile($user);
@@ -181,6 +193,7 @@ final class AccountSecurity
 
     public static function recoveryCodes(User $user): array
     {
+        self::assertLocal($user);
         if (self::strict($user) || !self::recent($user) || !self::enrolled($user)) throw new ForbiddenHttpException();
         $tx = Yii::$app->db->beginTransaction();
         try {
@@ -199,6 +212,7 @@ final class AccountSecurity
 
     public static function recover(User $user, string $code): bool
     {
+        if (!$user->localCredentialsAllowed()) return false;
         self::rate($user, 'recovery');
         // Typed recovery codes cannot satisfy the phishing-resistant administrator policy.
         if (self::strict($user)) return false;

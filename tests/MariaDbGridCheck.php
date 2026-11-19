@@ -12,7 +12,7 @@ try {
     $environment = getenv();
     $environment['UM_TEST_GRID_DB_DSN'] = $dsn;
     $process = proc_open([PHP_BINARY, dirname(__DIR__) . '/vendor/phpunit/phpunit/phpunit', '--configuration', 'phpunit.xml.dist',
-        '--filter', 'GridQueryTest|AuditSearchTest|UserFiltersTest'], [0 => STDIN, 1 => STDOUT, 2 => STDERR], $pipes, dirname(__DIR__), $environment);
+        '--filter', 'GridQueryTest|AuditSearchTest|UserFiltersTest|CentralIntegrationTest'], [0 => STDIN, 1 => STDOUT, 2 => STDERR], $pipes, dirname(__DIR__), $environment);
     if (!is_resource($process) || proc_close($process) !== 0) throw new RuntimeException('MariaDB grid query tests failed.');
 } finally {
     if ($created && preg_match('/^um_gridcheck_[a-f0-9]{12}$/D', $database)) $db->createCommand('DROP DATABASE ' . $db->quoteTableName($database))->execute();

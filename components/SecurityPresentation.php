@@ -10,6 +10,9 @@ final class SecurityPresentation
     public static function events(): array
     {
         $labels = [
+            'account.central_created' => 'Central system account created',
+            'authentication.local_disabled' => 'Local authentication disabled',
+            'authentication.local_enabled' => 'Local authentication enabled',
             'reauth.failed' => 'Identity verification rejected',
             'external.linked' => 'External account linked', 'external.unlinked' => 'External account unlinked',
             'external.login' => 'External sign-in verified', 'external.registered' => 'Account created through an external provider',
@@ -71,7 +74,7 @@ final class SecurityPresentation
         $data = json_decode($row['details'] ?? '', true);
         $data = is_array($data) ? $data : [];
         $t = fn($label, $params = []) => UM::t('front', $label, $params);
-        if (str_starts_with($row['event'], 'external.')) return $t('Identity provider: {provider}.', ['provider' => ['google' => 'Google', 'microsoft' => 'Microsoft'][$data['provider'] ?? ''] ?? $t('Not recorded')]);
+        if (str_starts_with($row['event'], 'external.')) return $t('Identity provider: {provider}.', ['provider' => ['google' => 'Google', 'microsoft' => 'Microsoft', 'central' => 'Central system'][$data['provider'] ?? ''] ?? $t('Not recorded')]);
         if ($row['event'] === 'session.started') {
             $method = ['password' => 'Password', 'totp' => 'Authenticator code', 'passkey' => 'Passkey', 'google' => 'Google', 'microsoft' => 'Microsoft'][$data['method'] ?? ''] ?? 'Verification method';
             return $t('Signed in using: {method}.', ['method' => $t($method)]);

@@ -223,4 +223,11 @@ return [
     'Too many attempts' => 'Demasiados intentos',
     'Unable to send message for email provided' => 'Deshabilitado para enviar mensaje por correo electrónico proveído',
     'You could not login from this IP' => 'Usted no puede iniciar sesión desde esta dirección IP',
+    'Central system account' => 'Cuenta del sistema central',
+    'Local account' => 'Cuenta local',
+    'Account source' => 'Origen de la cuenta',
+    'Central system' => 'Sistema central',
+    'Central system account created' => 'Cuenta del sistema central creada',
+    'Local authentication disabled' => 'Autenticación local desactivada',
+    'Local authentication enabled' => 'Autenticación local activada',
 ];

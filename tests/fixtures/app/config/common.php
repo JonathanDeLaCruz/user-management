@@ -18,6 +18,11 @@ $config = [
     ],
     'params' => ['adminEmail' => 'security-tests@example.test'],
 ];
+if (getenv('UM_TEST_CHILD_MODE') === '1') {
+    $config['modules']['user-management']['localAuthentication'] = false;
+    $config['modules']['user-management']['mfaPolicy'] = 'all';
+    $config['components']['user']['loginUrl'] = ['/central-test/entry'];
+}
 if (getenv('UM_TEST_EXTERNAL_PROVIDERS') === '1') {
     foreach (['google', 'microsoft'] as $provider) $config['modules']['user-management']['externalAuth'][$provider] = [
         'enabled' => true, 'clientId' => 'test-' . $provider, 'clientSecret' => 'test-only-secret',

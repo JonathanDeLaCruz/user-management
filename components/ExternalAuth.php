@@ -11,6 +11,7 @@ class ExternalAuth
 {
     public static function enabled(): array
     {
+        if (!UM::instance()->localAuthentication) return [];
         $result = [];
         foreach (['google' => 'Google', 'microsoft' => 'Microsoft'] as $id => $label) {
             if ((UM::instance()->externalAuth[$id]['enabled'] ?? false) === true) $result[$id] = $label;
@@ -58,6 +59,7 @@ class ExternalAuth
         $config = self::config($provider);
         if (!in_array($intent, ['login', 'link', 'reauth'], true)) throw new ForbiddenHttpException();
         $user = User::component()->identity;
+        if ($user) AccountSecurity::assertLocal($user);
         if (($intent === 'login') !== ($user === null)) throw new ForbiddenHttpException();
         if ($intent === 'link' && !AccountSecurity::recent($user)) throw new ForbiddenHttpException(UM::t('front', 'Verify your identity before making changes.'));
         if ($intent === 'reauth' && !isset(self::links($user)[$provider])) throw new ForbiddenHttpException();
@@ -88,6 +90,7 @@ class ExternalAuth
         if (!is_string($state) || !hash_equals($flow['state'] ?? '', $state) || $state === '') throw new ForbiddenHttpException();
         Yii::$app->session->remove('um_external_flow'); // Consume before any network call, including provider errors.
         $user = User::component()->identity;
+        if ($user) AccountSecurity::assertLocal($user);
         if (($flow['expires'] ?? 0) < time() || ($flow['provider'] ?? '') !== $provider
             || !hash_equals($flow['config'] ?? '', self::fingerprint($config)) || ($flow['user'] ?? null) !== $user?->id
             || ($user && !hash_equals($flow['key'] ?? '', hash('sha256', $user->auth_key)))
@@ -118,6 +121,7 @@ class ExternalAuth
         $link = (new Query())->from('{{%um_external_identity}}')->where(['id' => $id])->one();
         if ($intent === 'reauth') {
             $user = User::component()->identity;
+        if ($user) AccountSecurity::assertLocal($user);
             if (!$link || (int)$link['user_id'] !== (int)$user->id) throw new ForbiddenHttpException();
             Yii::$app->session->set('um_external_reauth', ['user' => $user->id, 'key' => hash('sha256', $user->auth_key), 'expires' => time() + 300]);
             if (!AccountSecurity::requiresMfa($user)) AccountSecurity::markRecent($user, $provider);
@@ -126,6 +130,7 @@ class ExternalAuth
         }
         if ($intent === 'link') {
             $user = User::component()->identity;
+        if ($user) AccountSecurity::assertLocal($user);
             if (!AccountSecurity::recent($user) || ($link && (int)$link['user_id'] !== (int)$user->id)) throw new ForbiddenHttpException();
             $this->link($user, $provider, $config, $claims, $id);
             return 'security';
@@ -135,7 +140,7 @@ class ExternalAuth
             if (!$config['allowRegistration']) throw new ForbiddenHttpException(UM::t('front', 'Sign in with your existing account and link this provider in Account security.'));
             $user = $this->register($provider, $config, $claims, $id);
         }
-        if (!$user || !AccountSecurity::ipAllowed($user)) throw new ForbiddenHttpException();
+        if (!$user || !$user->localCredentialsAllowed() || !AccountSecurity::ipAllowed($user)) throw new ForbiddenHttpException();
         Audit::record('external.login', (string)$user->id, ['provider' => $provider]);
         if (AccountSecurity::requiresMfa($user)) { AccountSecurity::begin($user); return 'mfa'; }
         if (!User::component()->completeExternalLogin($user, $provider)) throw new ForbiddenHttpException();
@@ -180,6 +185,7 @@ class ExternalAuth
 
     public function unlink(User $user, string $provider, string $password): void
     {
+        AccountSecurity::assertLocal($user);
         if (!in_array($provider, ['google', 'microsoft'], true) || !AccountSecurity::recent($user)) throw new ForbiddenHttpException();
         AccountSecurity::rate($user, 'external-unlink');
         $tx = Yii::$app->db->beginTransaction();

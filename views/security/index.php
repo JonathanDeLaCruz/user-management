@@ -6,6 +6,7 @@ use webvimark\modules\UserManagement\UserManagementModule as UM;
 $this->title = UM::t('front', 'Account security');
 $this->params['breadcrumbs'][] = $this->title;
 $t = fn($text, $params = []) => Html::encode(UM::t('front', $text, $params));
+$localCredentials = $user->localCredentialsAllowed();
 $reauthModel = $reauthModel ?? new \webvimark\modules\UserManagement\models\forms\ReauthenticationForm(['user' => $user]);
 $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) {
     $html = Html::beginForm([$route], 'post', ['class' => 'um-security-action']);
@@ -15,7 +16,7 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 ?>
 <div class="um-security-page">
 <p id="um-security-feedback" role="status" aria-live="polite" class="text-danger"></p>
-<?php if (!$recent || $reauthModel->hasErrors()): ?>
+<?php if ($localCredentials && (!$recent || $reauthModel->hasErrors())): ?>
 <section class="card um-card mb-4"><div class="card-body"><h2 class="h5"><?= $t('Verify your identity') ?></h2>
 <?php if ($reauthModel->hasErrors()): ?><?= Html::errorSummary($reauthModel, ['class' => 'alert alert-danger', 'role' => 'alert', 'header' => $t('Review the highlighted fields.')]) ?><?php endif ?>
 <?php if ($keys): ?><?= $this->render('_passkeyButton', ['operation' => 'reauth', 'label' => 'Verify with a passkey']) ?><?php endif ?>
@@ -41,6 +42,7 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 <?php endif ?>
 </div></section>
 <?php endif ?>
+<?php if ($localCredentials): ?>
 <div class="um-security-settings">
 <div>
 <section class="card um-card"><div class="card-body"><h2 class="h5"><?= $t('Passkeys') ?></h2>
@@ -73,10 +75,11 @@ $postButton = function ($route, $fields, $label, $color = 'secondary') use ($t) 
 <?php if (isset($codes)): ?><div class="alert alert-warning mt-3"><p><?= $t('Save these codes now. Each code works once and this list will not be shown again.') ?></p>
 <ul class="list-unstyled text-break"><?php foreach ($codes as $code): ?><li><code><?= Html::encode($code) ?></code></li><?php endforeach ?></ul></div><?php endif ?>
 </div></section></div></div>
+<?php endif ?>
 <section class="card um-card mt-4"><div class="card-body"><div class="um-security-session-heading"><h2 class="h5"><?= $t('Active sessions') ?></h2>
 <?php if ($recent): ?><?= $postButton('revoke-session', ['id' => 'others'], 'Sign out other sessions', 'danger') ?><?php endif ?></div>
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th><?= $t('Device') ?></th><th>IP</th><th><?= $t('Last activity') ?></th><th><?= $t('Method') ?></th><th></th></tr></thead><tbody>
-<?php foreach ($sessions as $session): ?><tr><td class="text-break"><?= Html::encode(\webvimark\modules\UserManagement\components\SecurityPresentation::device($session['user_agent'])) ?><?php if ($session['id'] === SecuritySessions::currentId()): ?><span class="badge bg-success ms-2"><?= $t('Current session') ?></span><?php endif ?></td><td><?= Html::encode($session['ip']) ?></td><td><?= Html::encode(Yii::$app->formatter->asDatetime($session['last_seen_at'])) ?></td><td><?= $t(['password' => 'Password', 'passkey' => 'Passkey', 'totp' => 'Authenticator code', 'google' => 'Google', 'microsoft' => 'Microsoft'][$session['method']] ?? 'Verification method') ?></td><td class="um-security-session-action"><?php if ($recent): ?><?= $postButton('revoke-session', ['id' => $session['id']], 'Sign out', 'danger') ?><?php endif ?></td></tr><?php endforeach ?>
+<?php foreach ($sessions as $session): ?><tr><td class="text-break"><?= Html::encode(\webvimark\modules\UserManagement\components\SecurityPresentation::device($session['user_agent'])) ?><?php if ($session['id'] === SecuritySessions::currentId()): ?><span class="badge bg-success ms-2"><?= $t('Current session') ?></span><?php endif ?></td><td><?= Html::encode($session['ip']) ?></td><td><?= Html::encode(Yii::$app->formatter->asDatetime($session['last_seen_at'])) ?></td><td><?= $t(['password' => 'Password', 'passkey' => 'Passkey', 'totp' => 'Authenticator code', 'google' => 'Google', 'microsoft' => 'Microsoft', 'central' => 'Central system'][$session['method']] ?? 'Verification method') ?></td><td class="um-security-session-action"><?php if ($recent): ?><?= $postButton('revoke-session', ['id' => $session['id']], 'Sign out', 'danger') ?><?php endif ?></td></tr><?php endforeach ?>
 </tbody></table></div></div></section>
-<?= $this->render('_externalAccounts', compact('user', 'recent')) ?>
+<?php if ($localCredentials): ?><?= $this->render('_externalAccounts', compact('user', 'recent')) ?><?php endif ?>
 </div>

@@ -7,6 +7,22 @@ use yii\web\Application;
 
 final class Audit
 {
+    /** Observe configuration changes on the next module web request, once per application. */
+    public static function authenticationMode(bool $enabled): void
+    {
+        $db = Yii::$app->db;
+        if (!$db->getTableSchema('{{%um_state}}') || !$db->getTableSchema('{{%um_audit_log}}')) return;
+        $name = 'auth-mode:' . substr(hash('sha256', Yii::$app->id), 0, 48);
+        $value = $enabled ? '1' : '0';
+        $old = (new \yii\db\Query())->select('value')->from('{{%um_state}}')->where(['name' => $name])->scalar();
+        if ($old === $value) return;
+        $db->transaction(static function () use ($db, $name, $value): void {
+            $db->createCommand()->upsert('{{%um_state}}', ['name' => $name, 'value' => '1'], false)->execute();
+            if ($db->createCommand()->update('{{%um_state}}', ['value' => $value], ['name' => $name, 'value' => $value === '1' ? '0' : '1'])->execute() === 1)
+                self::record($value === '1' ? 'authentication.local_enabled' : 'authentication.local_disabled');
+        });
+    }
+
     public static function record(string $event, ?string $target = null, array $details = []): void
     {
         if (!Yii::$app->db->getTableSchema('{{%um_audit_log}}')) return; // During initial migrations.

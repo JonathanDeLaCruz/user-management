@@ -57,6 +57,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public static function findByConfirmationToken($token, $purpose = 'password-reset')
 	{
+        if (!\webvimark\modules\UserManagement\UserManagementModule::instance()->localAuthentication) return null;
 		if (!self::isValidConfirmationToken($token, $purpose)) return null;
 		$expire    = \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire;
 
@@ -72,6 +73,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 		return static::findOne([
 			'confirmation_token' => hash('sha256', $token) . '_' . $timestamp,
 			'status'             => User::STATUS_ACTIVE,
+            'auth_source'        => 'local',
 		]);
 	}
 
@@ -83,6 +85,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public static function findInactiveByConfirmationToken($token, $purpose = 'registration')
 	{
+        if (!\webvimark\modules\UserManagement\UserManagementModule::instance()->localAuthentication) return null;
 		if (!self::isValidConfirmationToken($token, $purpose)) return null;
 		$expire    = \webvimark\modules\UserManagement\UserManagementModule::instance()->confirmationTokenExpire;
 
@@ -98,6 +101,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 		return static::findOne([
 			'confirmation_token' => hash('sha256', $token) . '_' . $timestamp,
 			'status'             => User::STATUS_INACTIVE,
+            'auth_source'        => 'local',
 		]);
 	}
 
@@ -133,8 +137,15 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public function validatePassword($password)
 	{
+		if (!$this->localCredentialsAllowed() || !is_string($password) || !$this->password_hash) return false;
 		return Yii::$app->security->validatePassword($password, $this->password_hash);
 	}
+
+    public function localCredentialsAllowed(): bool
+    {
+        return \webvimark\modules\UserManagement\UserManagementModule::instance()->localAuthentication
+            && !($this instanceof User && $this->isExternal());
+    }
 
 	/**
 	 * Generates password hash from password and sets it to the model
@@ -143,6 +154,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 	 */
 	public function setPassword($password)
 	{
+        if ($this instanceof User && $this->isExternal()) throw new \yii\base\InvalidArgumentException('Central accounts cannot have a local password.');
 		if ( php_sapi_name() == 'cli' )
 		{
 			$security = new Security();
@@ -177,6 +189,7 @@ abstract class UserIdentity extends ActiveRecord implements IdentityInterface
 
 	public function generateConfirmationToken($purpose = 'password-reset')
 	{
+        if (!$this->localCredentialsAllowed()) throw new \yii\base\InvalidArgumentException('Local account recovery is disabled.');
 		if (!in_array($purpose, ['password-reset', 'email', 'registration'], true)) throw new \InvalidArgumentException('Invalid token purpose');
 		$timestamp = time();
 		$this->confirmationToken = $purpose . '_' . Yii::$app->security->generateRandomString(32) . '_' . $timestamp;

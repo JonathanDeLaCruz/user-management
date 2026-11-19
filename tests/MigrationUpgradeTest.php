@@ -37,6 +37,25 @@ class MigrationUpgradeTest extends TestCase
         } finally { ob_end_clean(); }
     }
 
+    public function testUpgradePreservesExistingSessionsAndLocalAccounts(): void
+    {
+        $this->db->createCommand()->insert(User::tableName(), ['id' => 91, 'username' => 'before-central-upgrade',
+            'status' => 1, 'password_hash' => 'old-password-hash', 'auth_key' => 'old-auth-key', 'created_at' => 1, 'updated_at' => 1])->execute();
+        $this->db->createCommand('ALTER TABLE ' . User::tableName() . ' DROP COLUMN [[auth_source]]')->execute();
+        $this->db->createCommand('ALTER TABLE {{%um_session}} DROP COLUMN [[password_digest]]')->execute();
+        $this->db->createCommand()->dropTable('{{%um_session_revocation}}')->execute();
+        $id = str_repeat('b', 64);
+        $this->db->createCommand()->insert('{{%um_session}}', ['id' => $id, 'user_id' => 91,
+            'auth_key_hash' => hash('sha256', 'old-auth-key'), 'method' => 'password',
+            'created_at' => time(), 'last_seen_at' => time(), 'expires_at' => time() + 300])->execute();
+        $this->db->schema->refresh(); $this->migrate();
+        $row = (new Query())->from(User::tableName())->where(['id' => 91])->one($this->db);
+        self::assertSame('local', $row['auth_source']); self::assertSame('old-password-hash', $row['password_hash']);
+        self::assertSame(hash('sha256', 'old-password-hash'), (new Query())->select('password_digest')->from('{{%um_session}}')->where(['id' => $id])->scalar($this->db));
+        self::assertTrue(webvimark\modules\UserManagement\components\SecuritySessions::isActive(91, $id));
+        $this->migrate(); self::assertTrue(webvimark\modules\UserManagement\components\SecuritySessions::isActive(91, $id));
+    }
+
     public function testPrefixedInstallationCanReplayWithoutLosingAccountsOrTokens(): void
     {
         $token = str_repeat('a', 64) . '_' . time();

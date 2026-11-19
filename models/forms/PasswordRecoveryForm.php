@@ -57,7 +57,7 @@ class PasswordRecoveryForm extends Model
 			'status'          => User::STATUS_ACTIVE,
 		]);
 
-		if ( $user )
+		if ( $user && $user->localCredentialsAllowed() )
 		{
 			$this->user = $user;
 		}

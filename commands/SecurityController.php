@@ -17,7 +17,7 @@ class SecurityController extends \yii\console\Controller
 
     public function actionCheck()
     {
-        $minimum = ['8.2' => '8.2.35', '8.3' => '8.3.36', '8.4' => '8.4.27', '8.5' => '8.5.12'];
+        $minimum = ['8.2' => '8.2.36', '8.3' => '8.3.37', '8.4' => '8.4.28', '8.5' => '8.5.13', '8.6' => '8.6.0'];
         $branch = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
         if (!isset($minimum[$branch]) || version_compare(PHP_VERSION, $minimum[$branch], '<')) {
             $this->stderr("Update PHP to a supported security release.\n"); return ExitCode::CONFIG;
@@ -30,13 +30,13 @@ class SecurityController extends \yii\console\Controller
         }
         $this->stdout('PHP ' . PHP_VERSION . ": OK\n");
         $module = \webvimark\modules\UserManagement\UserManagementModule::instance();
-        if ($module->requirePhishingResistant || $module->webauthnOrigin || getenv('UM_WEBAUTHN_ORIGIN')) {
+        if ($module->localAuthentication && ($module->requirePhishingResistant || $module->webauthnOrigin || getenv('UM_WEBAUTHN_ORIGIN'))) {
             try { Passkeys::origin(); $this->stdout("WebAuthn origin: configured\n"); }
             catch (\Throwable $e) { $this->stderr($e->getMessage() . "\n"); return ExitCode::CONFIG; }
-        } else $this->stdout("WebAuthn origin: optional (TOTP policy)\n");
+        } else $this->stdout($module->localAuthentication ? "WebAuthn origin: optional (TOTP policy)\n" : "Local authentication: disabled (central application)\n");
         $key = base64_decode((string)($module->mfaEncryptionKey ?: getenv('UM_MFA_ENCRYPTION_KEY')), true);
-        if ($key === false || strlen($key) !== 32) { $this->stderr("Configure a random 32-byte base64 UM_MFA_ENCRYPTION_KEY for TOTP.\n"); return ExitCode::CONFIG; }
-        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_audit_log', 'um_external_identity'] as $table) {
+        if ($module->localAuthentication && ($key === false || strlen($key) !== 32)) { $this->stderr("Configure a random 32-byte base64 UM_MFA_ENCRYPTION_KEY for TOTP.\n"); return ExitCode::CONFIG; }
+        foreach (['um_mfa', 'um_passkey', 'um_recovery_code', 'um_session', 'um_audit_log', 'um_external_identity', 'um_session_revocation'] as $table) {
             if (!Yii::$app->db->getTableSchema('{{%' . $table . '}}', true)) { $this->stderr("Run the module migrations.\n"); return ExitCode::CONFIG; }
         }
         foreach (\webvimark\modules\UserManagement\components\ExternalAuth::enabled() as $provider => $label) {
@@ -59,7 +59,7 @@ class SecurityController extends \yii\console\Controller
         $tx = Yii::$app->db->beginTransaction();
         try {
             foreach (['um_passkey', 'um_recovery_code', 'um_mfa'] as $table) Yii::$app->db->createCommand()->delete('{{%' . $table . '}}', ['user_id' => $user->id])->execute();
-            SecuritySessions::revoke($user->id);
+            SecuritySessions::revoke($user->id, null, false, 'mfa-reset');
             $user->generateAuthKey(); $user->confirmation_token = null;
             if (!$user->save(false)) throw new \RuntimeException('Cannot update user.');
             Audit::record('operator.mfa_reset', (string)$user->id);
