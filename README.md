@@ -1,6 +1,6 @@
 # Gestión de usuarios para Yii 2
 
-Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña, passkeys, MFA, sesiones y auditoría. PHP 8.2–8.6 actualizado, Yii 2.0.55+ y Bootstrap 5.
+Usuarios, roles y permisos RBAC, registro, inicio de sesión, recuperación de contraseña, passkeys, MFA, sesiones y auditoría. PHP 8.2–8.5 actualizado, comprobación experimental en PHP 8.6, Yii 2.0.55+ y Bootstrap 5.
 
 ## Instalación
 
@@ -433,7 +433,9 @@ Las URLs guardadas al enviar al login son relativas (`/ruta?parametros`), sin co
 
 Se requieren como mínimo PHP **8.2.36, 8.3.37, 8.4.28, 8.5.13 o 8.6.0**, publicados el 19 de noviembre de 2026. En Windows utiliza builds oficiales actualizados, con Brotli **1.2.1 o posterior** si cargas cURL. Actualiza tanto PHP de consola como el del servidor web; Composer comprueba la versión del PHP que lo ejecuta. [Avisos oficiales de PHP](https://www.php.net/archive/2026.php).
 
-Las pruebas usan credenciales ficticias para verificar firmas WebAuthn, rechazo de orígenes falsos, desafíos y códigos reutilizados, política MFA, sesiones y migraciones. GitHub Actions las ejecuta en PHP 8.2–8.6 y comprueba instalaciones y actualizaciones en MariaDB. `tests/` y `.github/` están excluidos de la distribución Composer.
+El módulo acepta PHP 8.6.0, pero **la instalación estable de Yii 2.0.55 en PHP 8.6 está pendiente de HTMLPurifier**: su versión estable 4.19.1 solo declara compatibilidad hasta PHP 8.5. Su [rama oficial de desarrollo](https://github.com/ezyang/htmlpurifier/blob/master/composer.json) ya incluye 8.6. No se sustituye esa biblioteca ni se requieren versiones de desarrollo. En producción utiliza una de las ramas 8.2–8.5 actualizadas hasta que la dependencia publique soporte estable. El job experimental resuelve dependencias con una plataforma Composer 8.5.13 y ejecuta las pruebas en el intérprete real 8.6.0; no demuestra que Composer pueda instalar el paquete de forma normal en 8.6.
+
+Las pruebas usan credenciales ficticias para verificar firmas WebAuthn, rechazo de orígenes falsos, desafíos y códigos reutilizados, política MFA, sesiones y migraciones. GitHub Actions las ejecuta en PHP 8.2.36, 8.3.37, 8.4.28, 8.5.13 y, experimentalmente, 8.6.0, con instalaciones y actualizaciones en MariaDB. `tests/` y `.github/` están excluidos de la distribución Composer. Se rechazan mediante Composer las versiones de Symfony MIME y Serializer afectadas por los avisos de seguridad conocidos al publicar esta versión.
 
 Para ejecutar las pruebas desde una copia Git del repositorio:
 

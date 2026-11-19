@@ -1,6 +1,6 @@
 {
   "name": "joan/user-management",
-  "description": "Yii2 user management and RBAC with Bootstrap 5 and PHP 8.2-8.6",
+  "description": "Yii2 user management and RBAC with Bootstrap 5, patched PHP 8.2-8.5 and experimental PHP 8.6",
   "type": "yii2-extension",
   "autoload": {
     "psr-4": {

@@ -7,6 +7,7 @@ permissions:
   contents: read
 jobs:
   test:
+    name: PHP ${{ matrix.php }}${{ matrix.php == '8.6.0' && ' (experimental)' || '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
@@ -35,6 +36,10 @@ jobs:
       - name: Install test dependencies
         run: |
           composer config repositories.asset-packagist composer https://asset-packagist.org
+          if [ '${{ matrix.php }}' = '8.6.0' ]; then
+            echo 'Experimental engine test only: stable HTMLPurifier currently excludes PHP 8.6 in its Composer metadata.'
+            composer config platform.php 8.5.13
+          fi
           composer update --no-interaction --prefer-dist
           composer audit --no-interaction
       - name: Security, authentication and SQLite migrations
